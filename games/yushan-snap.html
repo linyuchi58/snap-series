@@ -3,7 +3,7 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no, viewport-fit=cover">
-    <title>巔峰攀岩王 Yushan Snap! [v1.4]</title>
+    <title>巔峰攀岩王 Yushan Snap! [v1.4.1]</title>
     <style>
         * { box-sizing: border-box; -webkit-tap-highlight-color: transparent; }
         body, html {
@@ -697,7 +697,7 @@
     <!-- 頂部導覽列 (標示版本 v1.3) -->
     <div class="navbar">
         <h1>
-            🧗 巔峰攀岩王 Yushan Snap! <span class="ver-badge">v1.4</span>
+            🧗 巔峰攀岩王 Yushan Snap! <span class="ver-badge">v1.4.1</span>
         </h1>
         <div class="nav-tabs">
             <button id="tab-tv" class="tab-btn active" onclick="switchTab('tv')">📺 1. 教室大電視看板</button>
@@ -1406,9 +1406,9 @@
         // 🌟 0. 全域設定、預設 [00000] 二位數乘法題庫與雙向獨立信箱變數 [v2.8.5]
         // =====================================================================
         const GAME_LABEL = '攀岩王';
-        const APP_VERSION = "v1.4";
+        const APP_VERSION = "v1.4.1";
         const DEFAULT_GAS_URL = "https://script.google.com/macros/s/AKfycbwldbgt8JrFwbP4GbaMR-ICgWrdY6N7flmilKvXOI-rudwwfLUMu3b5NCL-KWofiL85/exec";
-        const DEFAULT_SITE_URL = "https://sites.google.com/view/linyuchi/snap%E8%88%89%E7%89%8C%E4%BA%92%E5%8B%95%E6%8C%91%E6%88%B0%E5%8D%80/Yushan-Snap";
+        const DEFAULT_SITE_URL = "https://linyuchi58.github.io/yushan-snap/";
 
         let classSize = 28;
         let useNumericLabels = true;
@@ -1523,6 +1523,7 @@
         }
         function getSiteUrl() {
             const saved = localStorage.getItem('POPQUIZ_SNAP_SITE_URL');
+            if (saved && saved.indexOf('sites.google.com') >= 0) { localStorage.setItem('POPQUIZ_SNAP_SITE_URL', DEFAULT_SITE_URL); return DEFAULT_SITE_URL; }
             if (saved === "https://sites.google.com/view/linyuchi/popquiz-snap" || (saved && saved.includes("popquiz-snap"))) {
                 localStorage.setItem('POPQUIZ_SNAP_SITE_URL', DEFAULT_SITE_URL);
                 return DEFAULT_SITE_URL;

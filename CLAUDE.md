@@ -35,6 +35,20 @@
 - 題庫 JSON 不得含 `roomPin` 等密碼欄位（`sanitizeConfig_`）；`getRoomConfig` 是公開讀取。
 - 後端錯誤一律回傳 `{status:"error", code, message}`；前端要顯示 `message`。
 
+## 發布（GitHub Pages）
+
+| 遊戲 | GitHub 專案 | 網址 |
+| --- | --- | --- |
+| 秒答樂 | linyuchi58/popquiz-snap | https://linyuchi58.github.io/popquiz-snap/ |
+| 逆轉王 | linyuchi58/popquiz-showdown | https://linyuchi58.github.io/popquiz-showdown/ |
+| 攀岩王 | linyuchi58/yushan-snap | https://linyuchi58.github.io/yushan-snap/ |
+| 甜點派對 | linyuchi58/sweet-monster-snap | https://linyuchi58.github.io/sweet-monster-snap/ |
+
+本 repo（linyuchi58/snap-series）是原始碼；各遊戲專案只放 `index.html`（＝ `games/<專案名>.html`）與 README。
+改版流程：改 `games/` 或 `ui/` → `python3 tools/build_ui.py` → 跑測試 → `tools/publish.sh <clone 資料夾>` → 各專案 commit、push。
+遊戲裡的 `DEFAULT_SITE_URL`（手機掃 QR Code 開啟的網址）指向各自的 GitHub Pages 網址；舊的協作平台網址會自動換掉。
+老師的其他遊戲（拖曳分類、打地鼠等）各有獨立專案與後端，不屬於本系列；`linyuchi58/game-codes` 是「遊戲代碼公開區」。
+
 ## 版本
 
 版號寫在 `APP_VERSION` 與 `<title>`，並記錄於 `CHANGELOG.md`。

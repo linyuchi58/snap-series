@@ -3,7 +3,7 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no, viewport-fit=cover">
-    <title>舉牌逆轉王 PopQuiz Showdown! [v1.3 極速賽道超車版]</title>
+    <title>舉牌逆轉王 PopQuiz Showdown! [v1.3.1 極速賽道超車版]</title>
     <style>
         * { box-sizing: border-box; -webkit-tap-highlight-color: transparent; }
         body, html { margin: 0; padding: 0; width: 100%; background: #0b1120; color: #2c3e50; font-family: 'Segoe UI', 'Microsoft JhengHei', sans-serif; overflow-x: hidden; }
@@ -259,7 +259,7 @@
 
     <!-- 導覽列精簡為 4 大核心功能，版本標示 v1.2 -->
     <div class="navbar">
-        <h1>🏎️ 舉牌逆轉王 PopQuiz Showdown! <span class="ver-badge">v1.3</span></h1>
+        <h1>🏎️ 舉牌逆轉王 PopQuiz Showdown! <span class="ver-badge">v1.3.1</span></h1>
         <div class="nav-tabs">
             <button id="tab-tv" class="tab-btn active" onclick="switchTab('tv')">📺 1. 極速賽道大電視</button>
             <button id="tab-scan" class="tab-btn" onclick="switchTab('scan')">📱 2. 手機掃描遙控端</button>
@@ -723,9 +723,9 @@
 
     <script>
         const GAME_LABEL = '逆轉王';
-        const APP_VERSION = "v1.3";
+        const APP_VERSION = "v1.3.1";
         const DEFAULT_GAS_URL = "https://script.google.com/macros/s/AKfycbwldbgt8JrFwbP4GbaMR-ICgWrdY6N7flmilKvXOI-rudwwfLUMu3b5NCL-KWofiL85/exec";
-        const DEFAULT_SITE_URL = "https://sites.google.com/view/linyuchi/snap%E8%88%89%E7%89%8C%E4%BA%92%E5%8B%95%E6%8C%91%E6%88%B0%E5%8D%80/PopQuiz";
+        const DEFAULT_SITE_URL = "https://linyuchi58.github.io/popquiz-showdown/";
 
         let classSize = 28;
         let useNumericLabels = true;
@@ -828,6 +828,7 @@
         }
         function getSiteUrl() {
             const saved = localStorage.getItem('POPQUIZ_SHOWDOWN_SITE_URL_V12');
+            if (saved && saved.indexOf('sites.google.com') >= 0) { localStorage.setItem('POPQUIZ_SHOWDOWN_SITE_URL_V12', DEFAULT_SITE_URL); return DEFAULT_SITE_URL; }
             return (saved && saved.startsWith('http')) ? saved : DEFAULT_SITE_URL;
         }
         function saveSiteUrl() {

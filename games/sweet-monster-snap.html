@@ -3,7 +3,7 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no, viewport-fit=cover">
-    <title>舉牌甜點大派對 Sweet Monster Snap! [v1.2 零誤判高清遠距版]</title>
+    <title>舉牌甜點大派對 Sweet Monster Snap! [v1.2.1 零誤判高清遠距版]</title>
     <script src="https://cdnjs.cloudflare.com/ajax/libs/jspdf/2.5.1/jspdf.umd.min.js"></script>
     <style>
         * { box-sizing: border-box; -webkit-tap-highlight-color: transparent; }
@@ -548,7 +548,7 @@
     <!-- 頂部導覽列 (標示版本 v2.8.5) -->
     <div class="navbar">
         <h1>
-            🍩 舉牌甜點大派對 <span class="ver-badge">v1.2</span>
+            🍩 舉牌甜點大派對 <span class="ver-badge">v1.2.1</span>
         </h1>
         <div class="nav-tabs">
             <button id="tab-tv" class="tab-btn active" onclick="switchTab('tv')">📺 1. 教室大電視看板</button>
@@ -1207,9 +1207,9 @@
         // 🌟 0. 全域設定、預設 [00000] 二位數乘法題庫與雙向獨立信箱變數 [v2.8.5]
         // =====================================================================
         const GAME_LABEL = '甜點派對';
-        const APP_VERSION = "v1.2";
+        const APP_VERSION = "v1.2.1";
         const DEFAULT_GAS_URL = "https://script.google.com/macros/s/AKfycbwldbgt8JrFwbP4GbaMR-ICgWrdY6N7flmilKvXOI-rudwwfLUMu3b5NCL-KWofiL85/exec";
-        const DEFAULT_SITE_URL = "https://sites.google.com/view/linyuchi/snap%E8%88%89%E7%89%8C%E4%BA%92%E5%8B%95%E6%8C%91%E6%88%B0%E5%8D%80/Sweet-Monster-Snap";
+        const DEFAULT_SITE_URL = "https://linyuchi58.github.io/sweet-monster-snap/";
 
         let classSize = 28;
         let useNumericLabels = true;
@@ -1319,6 +1319,7 @@
         }
         function getSiteUrl() {
             const saved = localStorage.getItem('SWEET_MONSTER_SNAP_SITE_URL_V11');
+            if (saved && saved.indexOf('sites.google.com') >= 0) { localStorage.setItem('SWEET_MONSTER_SNAP_SITE_URL_V11', DEFAULT_SITE_URL); return DEFAULT_SITE_URL; }
             if (saved && saved.startsWith('http')) return saved;
             return DEFAULT_SITE_URL;
         }

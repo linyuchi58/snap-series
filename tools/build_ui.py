@@ -8,9 +8,9 @@ CSS = (ROOT / "ui/snap-ui.css").read_text(encoding="utf-8")
 JS = (ROOT / "ui/snap-ui.js").read_text(encoding="utf-8")
 
 GAMES = {
-    "popquiz-showdown.html": {"version": "v1.3", "config": {"game": "showdown", "accent": "#f97316", "accentInk": "#1c0a00", "canvases": [{"sel": "#race-track-canvas", "minHeight": 320}]}},
-    "yushan-snap.html": {"version": "v1.4", "config": {"game": "yushan", "accent": "#fbbf24", "accentInk": "#1f1300", "canvases": []}},
-    "sweet-monster-snap.html": {"version": "v1.2", "config": {"game": "sweet", "accent": "#f472b6", "accentInk": "#2a0717", "canvases": [{"sel": "#sweet-stage-canvas", "minHeight": 520}]}},
+    "popquiz-showdown.html": {"version": "v1.3.1", "config": {"game": "showdown", "accent": "#f97316", "accentInk": "#1c0a00", "canvases": [{"sel": "#race-track-canvas", "minHeight": 320}]}},
+    "yushan-snap.html": {"version": "v1.4.1", "config": {"game": "yushan", "accent": "#fbbf24", "accentInk": "#1f1300", "canvases": []}},
+    "sweet-monster-snap.html": {"version": "v1.2.1", "config": {"game": "sweet", "accent": "#f472b6", "accentInk": "#2a0717", "canvases": [{"sel": "#sweet-stage-canvas", "minHeight": 520}]}},
 }
 BEGIN, END = "<!-- SNAP-UI:BEGIN -->", "<!-- SNAP-UI:END -->"
 

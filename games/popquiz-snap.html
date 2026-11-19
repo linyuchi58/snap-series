@@ -3,7 +3,7 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no, viewport-fit=cover">
-    <title>舉牌秒答樂 PopQuiz Snap! [v2.9.0 極限大條碼旗艦版]</title>
+    <title>舉牌秒答樂 PopQuiz Snap! [v2.9.1 極限大條碼旗艦版]</title>
     <script src="https://cdnjs.cloudflare.com/ajax/libs/jspdf/2.5.1/jspdf.umd.min.js"></script>
     <style>
         * { box-sizing: border-box; -webkit-tap-highlight-color: transparent; }
@@ -1113,9 +1113,9 @@
         // 🌟 0. 全域設定、預設 [00000] 二位數乘法題庫與雙向獨立信箱變數 [v2.8.6]
         // =====================================================================
         const GAME_LABEL = '秒答樂';
-        const APP_VERSION = "v2.9.0";
+        const APP_VERSION = "v2.9.1";
         const DEFAULT_GAS_URL = "https://script.google.com/macros/s/AKfycbwldbgt8JrFwbP4GbaMR-ICgWrdY6N7flmilKvXOI-rudwwfLUMu3b5NCL-KWofiL85/exec";
-        const DEFAULT_SITE_URL = "https://sites.google.com/view/linyuchi/snap%E8%88%89%E7%89%8C%E4%BA%92%E5%8B%95%E6%8C%91%E6%88%B0%E5%8D%80/popquiz-snap";
+        const DEFAULT_SITE_URL = "https://linyuchi58.github.io/popquiz-snap/";
 
         let classSize = 28;
         let useNumericLabels = true;
@@ -1226,6 +1226,7 @@
         }
         function getSiteUrl() {
             const saved = localStorage.getItem('POPQUIZ_SNAP_SITE_URL_V286');
+            if (saved && saved.indexOf('sites.google.com') >= 0) { localStorage.setItem('POPQUIZ_SNAP_SITE_URL_V286', DEFAULT_SITE_URL); return DEFAULT_SITE_URL; }
             if (saved && saved.startsWith('http')) return saved;
             return DEFAULT_SITE_URL;
         }

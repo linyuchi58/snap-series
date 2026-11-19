@@ -6,11 +6,12 @@
 
 | 遊戲 | 檔案 | 版本 |
 | --- | --- | --- |
-| 舉牌秒答樂 PopQuiz Snap! | `games/popquiz-snap.html` | v2.9.0 |
-| 舉牌逆轉王 PopQuiz Showdown! | `games/popquiz-showdown.html` | v1.3 |
-| 巔峰攀岩王 Yushan Snap! | `games/yushan-snap.html` | v1.4 |
-| 舉牌甜點大派對 Sweet Monster Snap! | `games/sweet-monster-snap.html` | v1.2 |
+| 舉牌秒答樂 PopQuiz Snap! | `games/popquiz-snap.html` | v2.9.1 |
+| 舉牌逆轉王 PopQuiz Showdown! | `games/popquiz-showdown.html` | v1.3.1 |
+| 巔峰攀岩王 Yushan Snap! | `games/yushan-snap.html` | v1.4.1 |
+| 舉牌甜點大派對 Sweet Monster Snap! | `games/sweet-monster-snap.html` | v1.2.1 |
 
+- 線上版：https://linyuchi58.github.io/popquiz-snap/ 、/popquiz-showdown/ 、/yushan-snap/ 、/sweet-monster-snap/
 - 後端：`gas/Code.gs`，四款共用同一個部署（部署方式見 `docs/DEPLOY-v3.1.md`）
 - 介面層：`ui/`（修改後執行 `python3 tools/build_ui.py` 內嵌進三款遊戲）
 - 維護守則：`CLAUDE.md`

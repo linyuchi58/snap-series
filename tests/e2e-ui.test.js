@@ -60,10 +60,10 @@ async function runGame(browser, file) {
   // 鍵盤／簡報遙控器
   await tv.mouse.click(960, 300);
   await tv.keyboard.press('PageDown');
-  await tv.waitForTimeout(300);
+  await tv.waitForTimeout(600);
   const q1 = await tv.evaluate(() => currentQIndex);
   await tv.keyboard.press('ArrowLeft');
-  await tv.waitForTimeout(300);
+  await tv.waitForTimeout(600);
   const q0 = await tv.evaluate(() => currentQIndex);
   check('簡報遙控器 PageDown／方向鍵 可切換題目', q1 === 1 && q0 === 0, `${q1} → ${q0}`);
   await tv.evaluate(() => { for (let s = 1; s <= 5; s++) studentAnswers[s] = '2'; updateScoreBoard(true); });
@@ -107,7 +107,7 @@ async function runGame(browser, file) {
   });
   check('連線後底部固定顯示操作列，題目卡裡重複的按鈕隱藏', m.show && m.bottom === m.h && m.dupHidden, JSON.stringify(m));
   await phone.click('.snapui-m-next');
-  await phone.waitForTimeout(300);
+  await phone.waitForTimeout(600);
   check('手機「下一題」按鈕有效', (await phone.evaluate(() => currentQIndex)) === 1);
   await phone.evaluate(() => { for (let s = 1; s <= 3; s++) studentAnswers[s] = '1'; updateScoreBoard(true); });
   await phone.click('.snapui-m-reveal');
