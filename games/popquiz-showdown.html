@@ -1,0 +1,2668 @@
+<!DOCTYPE html>
+<html lang="zh-TW">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no, viewport-fit=cover">
+    <title>舉牌逆轉王 PopQuiz Showdown! [v1.2.1 極速賽道超車版]</title>
+    <style>
+        * { box-sizing: border-box; -webkit-tap-highlight-color: transparent; }
+        body, html { margin: 0; padding: 0; width: 100%; background: #0b1120; color: #2c3e50; font-family: 'Segoe UI', 'Microsoft JhengHei', sans-serif; overflow-x: hidden; }
+        #sites-breakout-banner { display: none; background: linear-gradient(135deg, #fff3cd 0%, #ffeaa7 100%); border-bottom: 3px solid #e67e22; padding: 6px 12px; text-align: center; }
+        .btn-breakout { background: linear-gradient(to bottom, #ff9f43, #e67e22); color: #fff; font-size: 14px; font-weight: 900; padding: 6px 14px; border-radius: 8px; border: 2px solid #fff; cursor: pointer; display: inline-flex; align-items: center; gap: 5px; margin-top: 3px; }
+        .navbar { background: linear-gradient(135deg, #0f172a 0%, #1e1b4b 50%, #1e3799 100%); color: #fff; padding: 5px 14px; display: flex; justify-content: space-between; align-items: center; flex-wrap: wrap; gap: 8px; border-bottom: 2px solid #38bdf8; }
+        .navbar h1 { margin: 0; font-size: clamp(15px, 1.6vw, 19px); display: flex; align-items: center; gap: 6px; font-weight: 900; }
+        .ver-badge { font-size: 12px; background: #facc15; color: #1e293b; padding: 2px 8px; border-radius: 20px; font-weight: 900; }
+        .nav-tabs { display: flex; gap: 5px; flex-wrap: wrap; }
+        .tab-btn { background: rgba(255,255,255,0.12); color: #fff; border: 1px solid rgba(255,255,255,0.28); padding: 5px 10px; border-radius: 8px; font-weight: bold; font-size: 13px; cursor: pointer; transition: 0.15s; }
+        .tab-btn:hover { background: rgba(255,255,255,0.25); }
+        .tab-btn.active { background: #00b894; color: #fff; border-color: #fff; box-shadow: 0 2px 0 #00896f; }
+        .panel { display: none; padding: 6px 10px; max-width: 1920px; margin: 0 auto; }
+        .panel.active { display: block; }
+        #panel-scan, #panel-wall, #panel-admin { background: #f0f4f8; border-radius: 14px; min-height: 700px; }
+
+        .btn { border: none; padding: 5px 10px; border-radius: 7px; font-weight: 900; font-size: 13px; cursor: pointer; display: inline-flex; align-items: center; gap: 4px; transition: transform 0.1s; font-family: inherit; }
+        .btn:active { transform: translateY(2px); }
+        .btn:disabled { filter: grayscale(1) opacity(0.6); cursor: not-allowed; }
+        .btn-green { background: #00b894; color: #fff; box-shadow: 0 2px 0 #00896f; }
+        .btn-red { background: #ff7675; color: #fff; box-shadow: 0 2px 0 #d63031; }
+        .btn-blue { background: #0984e3; color: #fff; box-shadow: 0 2px 0 #0652DD; }
+        .btn-purple { background: #6c5ce7; color: #fff; box-shadow: 0 2px 0 #4834d4; }
+        .btn-orange { background: #fdcb6e; color: #2d3436; box-shadow: 0 2px 0 #e17055; }
+        .btn-dark { background: #2d3436; color: #fff; box-shadow: 0 2px 0 #000; }
+        .btn-fever { background: linear-gradient(135deg, #f59e0b 0%, #ef4444 100%); color: #fff; box-shadow: 0 2px 0 #991b1b; border: 1.5px solid #fef08a; }
+
+        /* 📺 分頁 1：上下全寬舞台 (鎖定 2K/16:9 最佳高度，絕不無限拉長) */
+        .tv-container {
+            background: #0f172a; color: #fff; border-radius: 16px; padding: 10px 12px;
+            box-shadow: 0 10px 30px rgba(0,0,0,0.6); border: 3px solid #38bdf8;
+            width: 100%; height: clamp(560px, 86vh, 880px); max-height: 880px;
+            display: flex; flex-direction: column; justify-content: space-between; gap: 10px;
+            position: relative; overflow: hidden;
+        }
+        .tv-container:fullscreen { height: 100vh; max-height: 100vh; border-radius: 0; }
+        @keyframes feverBorderGlow {
+            0% { border-color: #f59e0b; box-shadow: 0 0 16px rgba(245, 158, 11, 0.5); }
+            100% { border-color: #ef4444; box-shadow: 0 0 30px rgba(239, 68, 68, 0.9); }
+        }
+        .tv-container.fever-active { animation: feverBorderGlow 0.8s infinite alternate; }
+
+        /* 排法 1：上方 60% 全寬極速賽道舞台 ＋ 下方 40% (左大字題目區 + 右行政面板) */
+        .tv-vertical-layout { display: flex; flex-direction: column; gap: 10px; flex: 1; height: 100%; min-height: 0; }
+
+        /* 🏎️ 上方 60%：全寬極速賽道遊戲大舞台 */
+        .race-stage-wrapper {
+            flex: 1.45; min-height: 0; background: #1e293b; border: 2px solid #38bdf8;
+            border-radius: 14px; position: relative; display: flex; flex-direction: column;
+            overflow: hidden; box-shadow: inset 0 0 25px rgba(0,0,0,0.7);
+        }
+        .race-hud-top {
+            background: linear-gradient(90deg, rgba(15,23,42,0.92), rgba(30,27,75,0.92));
+            padding: 5px 12px; display: flex; justify-content: space-between; align-items: center;
+            gap: 10px; border-bottom: 1.5px solid rgba(56, 189, 248, 0.4); z-index: 3; flex-wrap: wrap;
+        }
+        .energy-track { width: 150px; height: 14px; background: rgba(255,255,255,0.15); border-radius: 10px; overflow: hidden; border: 1px solid rgba(255,255,255,0.3); }
+        .energy-fill { height: 100%; width: 0%; background: linear-gradient(90deg, #00b894, #facc15, #ff7675); transition: width 0.3s ease; }
+        .podium-inline { display: flex; gap: 6px; align-items: center; flex-wrap: wrap; }
+        .podium-pill { background: rgba(255,255,255,0.1); border: 1px solid #facc15; border-radius: 20px; padding: 2px 9px; font-size: 12px; font-weight: 900; color: #fff; }
+        .podium-pill.rank-1 { background: linear-gradient(90deg, #ca8a04, #eab308); color: #000; }
+
+        #race-track-canvas { width: 100%; flex: 1; min-height: 0; display: block; cursor: pointer; }
+
+        /* 下方 40%：左側 70% 巨型題目與四選項 ＋ 右側 30% 行政與迷你座號快點區 */
+        .tv-bottom-deck {
+            flex: 1; min-height: 0; display: grid; grid-template-columns: 70% 1fr; gap: 10px; align-items: stretch;
+        }
+        @media (max-width: 1024px) {
+            .tv-container { height: auto; max-height: none; }
+            .race-stage-wrapper { height: 380px; flex: none; }
+            .tv-bottom-deck { grid-template-columns: 1fr; }
+        }
+
+        /* 左下：題目挑戰區 (上方控制列 + 中央大字題目 + 下方四個大字選項) */
+        .tv-question-deck {
+            background: linear-gradient(160deg, #172554 0%, #0f172a 100%);
+            border: 2px solid #60a5fa; border-radius: 14px; padding: 8px 14px;
+            display: flex; flex-direction: column; justify-content: space-between; gap: 6px; min-height: 0; overflow: hidden;
+        }
+        .deck-ctrl-bar {
+            display: flex; justify-content: space-between; align-items: center; flex-wrap: wrap; gap: 5px;
+            border-bottom: 1px solid rgba(255,255,255,0.15); padding-bottom: 5px;
+        }
+        .tv-q-middle {
+            flex: 1; display: flex; flex-direction: column; justify-content: center; align-items: center;
+            text-align: center; min-height: 0; overflow-y: auto; padding: 2px 6px;
+        }
+        .tv-q-title {
+            font-size: clamp(26px, 3.2vw, 52px); font-weight: 900; color: #ffffff; line-height: 1.18;
+            margin: 0; text-shadow: 0 3px 10px rgba(0,0,0,0.7);
+        }
+        .tv-explanation-box {
+            display: none; width: 100%; background: rgba(254, 240, 138, 0.18);
+            border: 1.5px dashed #facc15; border-left: 6px solid #facc15; border-radius: 8px;
+            padding: 5px 10px; margin-top: 4px; color: #fef08a; font-weight: 900; font-size: clamp(14px, 1.4vw, 20px); text-align: left;
+        }
+        /* 四個選項一行 4 欄或 2x2 大字排列 */
+        .tv-opts-grid { display: grid; grid-template-columns: repeat(4, 1fr); gap: 8px; }
+        @media (max-width: 1200px) { .tv-opts-grid { grid-template-columns: 1fr 1fr; } }
+        .tv-opt-card {
+            background: rgba(255,255,255,0.96); color: #0f172a; border-radius: 10px; padding: 8px 12px;
+            font-size: clamp(18px, 2vw, 32px); font-weight: 900; display: flex; align-items: center; justify-content: space-between;
+            border: 3px solid transparent; box-shadow: 0 4px 10px rgba(0,0,0,0.3); transition: transform 0.2s;
+        }
+        .tv-opt-card.opt-1 { border-left: 10px solid #ff7675; }
+        .tv-opt-card.opt-2 { border-left: 10px solid #74b9ff; }
+        .tv-opt-card.opt-3 { border-left: 10px solid #fdcb6e; }
+        .tv-opt-card.opt-4 { border-left: 10px solid #55efc4; }
+        .tv-opt-card.is-correct-ans {
+            background: linear-gradient(135deg, #fff200 0%, #facc15 100%) !important;
+            border: 3px solid #e17055 !important; color: #b91c1c !important; transform: scale(1.03);
+            box-shadow: 0 0 18px rgba(250, 204, 21, 0.95);
+        }
+
+        /* 右下：行政連線設定與迷你座號狀態區 */
+        .tv-admin-deck {
+            background: rgba(15, 23, 42, 0.95); border: 2px solid rgba(148, 163, 184, 0.35);
+            border-radius: 14px; padding: 8px 10px; display: flex; flex-direction: column;
+            justify-content: space-between; gap: 6px; min-height: 0; overflow: hidden;
+        }
+        .admin-compact-row { display: flex; align-items: center; justify-content: space-between; gap: 4px; flex-wrap: wrap; }
+        .tv-pair-box { background: #1e3799; border: 1.5px solid #facc15; padding: 2px 7px; border-radius: 7px; display: inline-flex; align-items: center; gap: 4px; font-weight: 900; font-size: 12px; }
+        .tv-pair-digits { font-size: 16px; color: #fff200; letter-spacing: 1.5px; font-family: monospace; }
+        .sync-status-pill { padding: 3px 8px; border-radius: 12px; font-size: 11px; font-weight: 900; text-align: center; }
+        .sync-status-pill.waiting { background: rgba(231, 76, 60, 0.25); color: #ff7675; border: 1px solid #ff7675; }
+        .sync-status-pill.connected { background: rgba(0, 184, 148, 0.32); color: #55efc4; border: 1px solid #00b894; }
+        .sync-status-pill.mismatch { background: rgba(243, 156, 18, 0.35); color: #ffeaa7; border: 1px solid #f1c40f; }
+
+        /* 右下迷你座號燈號盤 (方便老師確認哪些座號已掃到，也可點擊微調) */
+        .mini-seat-matrix {
+            display: grid; grid-template-columns: repeat(7, 1fr); gap: 4px;
+            flex: 1; overflow-y: auto; align-content: start; padding-right: 2px; min-height: 0;
+        }
+        .mini-seat-chip {
+            background: #1e293b; border: 1px solid #475569; border-radius: 6px; padding: 3px 1px;
+            text-align: center; font-size: 11px; font-weight: 900; color: #94a3b8; cursor: pointer; user-select: none;
+        }
+        .mini-seat-chip.chip-masked { background: #6d28d9; color: #fff; border-color: #38bdf8; }
+        .mini-seat-chip.chip-1 { background: #e11d48; color: #fff; }
+        .mini-seat-chip.chip-2 { background: #0284c7; color: #fff; }
+        .mini-seat-chip.chip-3 { background: #d97706; color: #fff; }
+        .mini-seat-chip.chip-4 { background: #059669; color: #fff; }
+        .mini-seat-chip.chip-correct { border: 2px solid #fff200 !important; color: #fff200 !important; }
+
+        .tested-lock-badge { display: none; background: #00b894; color: #fff; padding: 3px 8px; border-radius: 6px; font-weight: 900; font-size: 12px; align-items: center; gap: 4px; }
+        .btn-retest { background: #fff; color: #d63031; border: 1px solid #d63031; padding: 1px 6px; border-radius: 4px; font-weight: 900; font-size: 11px; cursor: pointer; }
+
+        #tv-scan-float-layer { position: absolute; inset: 0; pointer-events: none; overflow: hidden; z-index: 15; }
+        @keyframes scanBubbleFly { 0% { opacity: 0; transform: translateY(20px) scale(0.8); } 20% { opacity: 1; transform: translateY(0) scale(1.05); } 80% { opacity: 1; transform: translateY(-30px); } 100% { opacity: 0; transform: translateY(-55px); } }
+        .scan-fly-bubble { position: absolute; top: 44px; background: linear-gradient(135deg, #00b894 0%, #0984e3 100%); color: #fff; border: 2px solid #fff200; border-radius: 30px; padding: 5px 14px; font-weight: 900; font-size: 14px; box-shadow: 0 6px 16px rgba(0,0,0,0.5); animation: scanBubbleFly 1.4s ease-out forwards; }
+
+        #tv-summary-view { display: none; flex: 1; background: rgba(255,255,255,0.98); color: #1e293b; border-radius: 14px; padding: 14px 18px; flex-direction: column; justify-content: space-between; overflow-y: auto; z-index: 10; }
+        .award-cards-row { display: grid; grid-template-columns: repeat(3, 1fr); gap: 10px; margin-bottom: 10px; }
+        .award-card { background: linear-gradient(135deg, #fffbeb 0%, #fef3c7 100%); border: 2px solid #f59e0b; border-radius: 10px; padding: 8px 12px; display: flex; align-items: center; gap: 8px; }
+        .tv-summary-matrix { display: grid; grid-template-columns: repeat(4, 1fr); gap: 7px; flex: 1; align-content: start; }
+        .tv-score-row { background: #f8fafc; border: 2px solid #e2e8f0; border-radius: 8px; padding: 5px 9px; display: flex; justify-content: space-between; align-items: center; font-weight: 900; font-size: 14px; }
+        .tv-score-row.top-scorer { background: linear-gradient(135deg, #fef9c3 0%, #fde047 100%); border-color: #eab308; color: #b91c1c; }
+
+        /* 📱 分頁 2~4 樣式 */
+        .mobile-sync-hud-bar { padding: 8px 12px; border-radius: 10px; font-weight: 900; font-size: 14px; margin-bottom: 8px; text-align: center; display: flex; align-items: center; justify-content: center; gap: 8px; }
+        .mobile-sync-hud-bar.ready { background: linear-gradient(135deg, #00b894 0%, #00cec9 100%); color: #fff; border: 2px solid #55efc4; }
+        .mobile-sync-hud-bar.offline { background: #dfe6e9; color: #2d3436; border: 2px dashed #636e72; }
+        .mobile-sync-hud-bar.warning { background: #e74c3c; color: #fff; border: 2px solid #f1c40f; }
+        .mobile-sync-hud-bar.pairing { background: linear-gradient(135deg, #f39c12 0%, #e67e22 100%); color: #fff; border: 2px solid #fff200; }
+        .mobile-explanation-box { display: none; background: #fff9db; border: 2px dashed #f59f00; border-left: 6px solid #f59f00; border-radius: 10px; padding: 8px 12px; margin: 6px 0; color: #d9480f; font-weight: 900; }
+        .teacher-cheat-sheet { background: #2d3436; color: #ffeaa7; border-left: 6px solid #00cec9; border-radius: 10px; padding: 8px 12px; margin-top: 8px; font-size: 13px; display: flex; flex-wrap: wrap; justify-content: space-between; align-items: center; gap: 6px; }
+        #mobile-q-mismatch-banner { display: none; background: #fff5f5; border: 3px solid #e74c3c; border-radius: 12px; padding: 10px 14px; margin-bottom: 10px; align-items: center; justify-content: space-between; flex-wrap: wrap; gap: 8px; }
+        .mobile-pair-gate { background: linear-gradient(135deg, #fff3cd 0%, #ffeaa7 100%); border: 3px solid #f39c12; border-radius: 14px; padding: 12px 16px; margin-bottom: 10px; display: flex; flex-wrap: wrap; align-items: center; justify-content: space-between; gap: 10px; }
+        .mobile-pair-gate.connected { background: linear-gradient(135deg, #d4edda 0%, #c3e6cb 100%); border-color: #28a745; }
+        .quiz-bar { background: #fff; border-radius: 12px; padding: 9px 12px; margin-bottom: 10px; display: flex; flex-wrap: wrap; gap: 8px; align-items: center; justify-content: space-between; border-left: 6px solid #0984e3; }
+        .quiz-input-group { display: flex; gap: 6px; align-items: center; flex-wrap: wrap; }
+        .input-code { padding: 4px 6px; border: 2px solid #0984e3; border-radius: 7px; font-size: 14px; font-weight: 900; width: 72px; text-align: center; color: #1e3799; }
+        .select-pill { padding: 4px 7px; border: 2px solid #74b9ff; border-radius: 7px; font-size: 12px; font-weight: 900; color: #2d3436; background: #f8fbff; cursor: pointer; }
+        .auto-quiz-badge { background: #e8f8f5; color: #006266; border: 1.5px solid #00b894; padding: 3px 8px; border-radius: 7px; font-size: 12px; font-weight: 900; }
+        .class-size-pill { background: #f1f2f6; padding: 4px 8px; border-radius: 8px; display: inline-flex; align-items: center; gap: 5px; font-weight: bold; font-size: 12px; }
+        .question-banner { background: #eef6ff; border: 2px solid #74b9ff; border-radius: 12px; padding: 10px 14px; margin-bottom: 10px; }
+        .question-title { font-size: clamp(16px, 2vw, 20px); font-weight: 900; color: #1e3799; }
+        .question-opts { display: grid; grid-template-columns: repeat(auto-fit, minmax(180px, 1fr)); gap: 8px; margin-top: 8px; }
+        .q-opt-item { background: #fff; padding: 8px 10px; border-radius: 8px; font-weight: 900; font-size: 15px; border: 2px solid #dfe6e9; display: flex; align-items: center; gap: 6px; }
+        .q-opt-item.is-correct-ans { background: #facc15 !important; border: 2.5px solid #e17055 !important; color: #c0392b !important; }
+        .scanner-layout { display: grid; grid-template-columns: 1fr 400px; gap: 12px; align-items: start; }
+        @media (max-width: 920px) { .scanner-layout { grid-template-columns: 1fr; } }
+        .camera-box { background: #000; border-radius: 14px; overflow: hidden; position: relative; width: 100%; border: 3px solid #2d3436; display: flex; justify-content: center; align-items: center; min-height: 240px; }
+        #video-preview { display: none; }
+        #scan-canvas { width: 100%; height: auto; display: block; z-index: 1; }
+        .scan-hud-tip { position: absolute; bottom: 6px; left: 6px; right: 6px; background: rgba(0,0,0,0.75); color: #fff; padding: 6px 10px; border-radius: 8px; font-size: 12px; font-weight: bold; display: flex; justify-content: space-between; align-items: center; pointer-events: none; z-index: 2; }
+        .camera-controls { display: flex; flex-wrap: wrap; gap: 6px; padding: 8px 10px; background: #fff; border-radius: 10px; margin-top: 8px; align-items: center; justify-content: space-between; }
+        .zoom-group { display: flex; gap: 4px; align-items: center; }
+        .zoom-btn { background: #ecf0f1; color: #2c3e50; border: 1px solid #bdc3c7; padding: 5px 9px; border-radius: 6px; font-weight: bold; cursor: pointer; }
+        .zoom-btn.active { background: #f39c12; color: #fff; border-color: #d68910; }
+        #ipad-snap-helper { display: none; background: #e8f8f5; border: 2px solid #00b894; border-radius: 10px; padding: 8px 12px; margin-top: 8px; align-items: center; justify-content: space-between; gap: 8px; }
+        .board-card { background: #fff; border-radius: 14px; padding: 12px; box-shadow: 0 3px 10px rgba(0,0,0,0.06); }
+        .stats-bar { display: grid; grid-template-columns: repeat(4, 1fr); gap: 5px; margin-bottom: 6px; }
+        .stat-pill { padding: 4px 4px; border-radius: 6px; text-align: center; color: #fff; font-weight: 900; font-size: 12px; }
+        .seat-grid { display: grid; grid-template-columns: repeat(5, 1fr); gap: 5px; max-height: 380px; overflow-y: auto; padding: 4px; }
+        .seat-grid.cols-8 { grid-template-columns: repeat(8, 1fr); font-size: 11px; }
+        .seat-grid.cols-10 { grid-template-columns: repeat(10, 1fr); font-size: 10px; }
+        .seat-cell { background: #f1f2f6; border-radius: 7px; padding: 5px 2px; text-align: center; font-weight: 900; font-size: 12px; color: #57606f; border: 2px solid transparent; cursor: pointer; user-select: none; }
+        .seat-cell.answered-1 { background: #ff7675; color: #fff; border-color: #d63031; }
+        .seat-cell.answered-2 { background: #74b9ff; color: #fff; border-color: #0984e3; }
+        .seat-cell.answered-3 { background: #fdcb6e; color: #2d3436; border-color: #e17055; }
+        .seat-cell.answered-4 { background: #55efc4; color: #2d3436; border-color: #00b894; }
+        .seat-cell.is-correct-seat { border: 2.5px solid #fff200 !important; outline: 2px solid #e67e22; }
+        .seat-cell.is-wrong-seat { opacity: 0.55; }
+        .wall-box { background: #fff; border-radius: 14px; padding: 12px; }
+        .wall-stage { background: #dfe6e9; border-radius: 12px; padding: 10px; margin-top: 8px; display: grid; grid-template-columns: repeat(6, 1fr); gap: 8px; justify-items: center; }
+        .wall-item { background: #fff; border-radius: 8px; padding: 5px; display: flex; flex-direction: column; align-items: center; cursor: pointer; width: 100%; max-width: 165px; }
+        .wall-item canvas { width: 100%; height: auto; aspect-ratio: 1 / 1; display: block; transition: transform 0.25s; }
+        .wall-item-label { font-size: 11px; font-weight: 900; color: #2d3436; margin-top: 4px; display: flex; justify-content: space-between; width: 100%; }
+        .admin-top-bar { display: flex; justify-content: space-between; align-items: center; background: #fff; padding: 10px 14px; border-radius: 12px; margin-bottom: 12px; flex-wrap: wrap; gap: 8px; }
+        .active-room-badge { background: linear-gradient(45deg, #1e3799, #0984e3); color: #fff; padding: 5px 12px; border-radius: 8px; font-weight: 900; font-size: 15px; }
+        .admin-box { background: #fff; padding: 14px; border-radius: 12px; margin-bottom: 14px; }
+        .class-builder-box { background: #f8fbff; border: 2px solid #74b9ff; border-radius: 10px; padding: 12px; margin-bottom: 12px; }
+        .builder-row { display: flex; flex-wrap: wrap; gap: 5px; align-items: center; margin-bottom: 6px; }
+        .chip-btn { background: #fff; border: 1.5px solid #bdc3c7; border-radius: 7px; padding: 4px 9px; font-size: 12px; font-weight: bold; color: #2d3436; cursor: pointer; }
+        .chip-btn.selected { background: #0984e3; color: #fff; border-color: #0652DD; }
+        .class-tag-pill { background: #e8f8f5; color: #006266; border: 1.5px solid #00b894; padding: 3px 9px; border-radius: 16px; font-size: 12px; font-weight: 900; display: inline-flex; align-items: center; gap: 5px; }
+        .class-tag-pill span.del { cursor: pointer; color: #d63031; font-weight: bold; }
+        .table-container { width: 100%; overflow-x: auto; background: #fff; border-radius: 8px; border: 1px solid #dfe6e9; max-height: 420px; overflow-y: auto; }
+        table { border-collapse: collapse; width: 100%; min-width: 760px; font-size: 13px; }
+        th, td { border: 1px solid #e9ecef; padding: 7px; text-align: center; }
+        th { background: #f6d365; color: #2d3436; position: sticky; top: 0; z-index: 2; font-weight: 900; }
+        tr:nth-child(even) { background: #f8f9fa; }
+        td input, td select { width: 96%; padding: 5px; border: 1px solid #bdc3c7; border-radius: 5px; font-size: 12px; font-weight: bold; }
+        .quick-paste-box { background: #e8f4f8; padding: 12px; border-radius: 10px; margin-bottom: 12px; border: 2px dashed #0984e3; }
+        .quick-paste-box textarea { width: 100%; height: 95px; padding: 8px; border-radius: 6px; border: 1px solid #bdc3c7; font-family: monospace; }
+        .overlay { display: none; position: fixed; inset: 0; background: rgba(0,0,0,0.82); flex-direction: column; justify-content: center; align-items: center; z-index: 100; }
+        .small-modal-card { background: #fff; color: #333; padding: 20px; border-radius: 16px; width: 92%; max-width: 480px; text-align: center; border: 4px solid #0984e3; max-height: 90vh; overflow-y: auto; }
+        .modal-card { background: #fff; color: #333; padding: 18px; border-radius: 16px; width: 94%; max-width: 800px; max-height: 88vh; display: flex; flex-direction: column; }
+        .mode-switch-tabs { display: grid; grid-template-columns: 1fr 1fr; gap: 6px; margin-bottom: 12px; background: #ecf0f1; padding: 4px; border-radius: 8px; }
+        .mode-tab { padding: 8px; font-size: 13px; font-weight: 900; border-radius: 6px; background: transparent; color: #555; border: none; cursor: pointer; }
+        .mode-tab.active { background: #fff; color: #0984e3; }
+        .suggest-chip { background: #e8f8f5; color: #16a085; border: 2px solid #1abc9c; padding: 3px 9px; border-radius: 7px; font-size: 13px; font-weight: 900; cursor: pointer; display: inline-block; margin: 2px; }
+        .diag-grid { display: grid; grid-template-columns: repeat(auto-fit, minmax(190px, 1fr)); gap: 8px; margin-bottom: 10px; }
+        .diag-stat-card { background: #f8f9fa; border-left: 5px solid #0984e3; padding: 8px 12px; border-radius: 7px; text-align: left; }
+        .diag-section { background: #fff; border: 1px solid #dfe6e9; border-radius: 8px; padding: 10px; margin-bottom: 10px; text-align: left; }
+        #toast-msg { display: none; position: fixed; top: 16px; left: 50%; transform: translateX(-50%); background: rgba(0, 184, 148, 0.96); color: #fff; padding: 9px 20px; border-radius: 9px; font-size: 15px; font-weight: bold; z-index: 300; box-shadow: 0 4px 12px rgba(0,0,0,0.3); }
+    </style>
+</head>
+<body>
+
+    <div id="toast-msg"></div>
+
+    <div id="sites-breakout-banner">
+        <div style="font-size: 13px; font-weight: 900; color: #c0392b;">
+            ⚠️ 偵測到您位於「Google 協作平台」內嵌視窗！欲開啟手機相機或 2K 全螢幕最佳比例，請點擊下方按鈕：
+        </div>
+        <button class="btn-breakout" onclick="openStandaloneFullTab()">
+            🚀 點此跳出協作平台框架（開啟手機相機 / 2K 全螢幕必點！）
+        </button>
+    </div>
+
+    <!-- 導覽列精簡為 4 大核心功能，版本標示 v1.2 -->
+    <div class="navbar">
+        <h1>🏎️ 舉牌逆轉王 PopQuiz Showdown! <span class="ver-badge">v1.2</span></h1>
+        <div class="nav-tabs">
+            <button id="tab-tv" class="tab-btn active" onclick="switchTab('tv')">📺 1. 極速賽道大電視</button>
+            <button id="tab-scan" class="tab-btn" onclick="switchTab('scan')">📱 2. 手機掃描遙控端</button>
+            <button id="tab-wall" class="tab-btn" onclick="switchTab('wall')">🖥️ 3. 30號測試牆</button>
+            <button id="tab-admin" class="tab-btn" onclick="openTeacherLoginModal()">⚙️ 4. 教師管理/出題</button>
+            <button id="btn-top-breakout" class="tab-btn" style="background:#e67e22; border-color:#fff;" onclick="openStandaloneFullTab()">🚀 跳出內嵌框</button>
+        </div>
+    </div>
+
+    <!-- ================= 分頁 1：📺 極速賽道大電視 (上 60% 全寬極速賽道舞台 ＋ 下 40% 超大字題目與行政面板) ================= -->
+    <div id="panel-tv" class="panel active">
+        <div id="tv-fullscreen-box" class="tv-container">
+            <div id="tv-scan-float-layer"></div>
+
+            <!-- 🏆 大電視「雙模式成績總表」 -->
+            <div id="tv-summary-view">
+                <div style="display:flex; justify-content:space-between; align-items:center; border-bottom:3px solid #0984e3; padding-bottom:8px; margin-bottom:8px; flex-wrap:wrap; gap:8px;">
+                    <div>
+                        <h2 id="tv-summary-title" style="margin:0; font-size:22px; color:#1e3799;">🏆 本場次極速逆轉風雲榜 & 成績總表</h2>
+                        <span id="tv-summary-subtitle" style="font-size:13px; color:#64748b; font-weight:bold;">目前已測驗計分題數：0 題（滿分 100 分）</span>
+                    </div>
+                    <div style="display:flex; gap:6px; flex-wrap:wrap;">
+                        <button class="btn btn-orange" onclick="setSummaryDisplayMode('ARENA')">🏎️ 賽道里程積分榜</button>
+                        <button class="btn btn-blue" onclick="setSummaryDisplayMode('PERCENT')">📊 標準百分制(100分)</button>
+                        <button class="btn btn-dark" onclick="toggleTvSummaryView(false)">🔙 返回極速賽道</button>
+                    </div>
+                </div>
+                <div id="tv-awards-banner" class="award-cards-row"></div>
+                <div id="tv-summary-matrix" class="tv-summary-matrix"></div>
+            </div>
+
+            <!-- 📺 排法 1 主視圖：上方全寬賽道遊戲舞台 ＋ 下方題目與設定 -->
+            <div id="tv-quiz-view" class="tv-vertical-layout">
+
+                <!-- 🏎️ 上方 60%：全寬「瑪利歐式極速賽道」大追逐 Canvas 遊戲場景 -->
+                <div class="race-stage-wrapper">
+                    <div class="race-hud-top">
+                        <div style="display:flex; align-items:center; gap:8px;">
+                            <span style="font-weight:900; font-size:14px; color:#38bdf8;">⚡ 引擎點火集氣：<strong id="tv-answered-ratio" style="color:#55efc4; font-size:16px;">0 / 28 (0%)</strong></span>
+                            <div class="energy-track"><div id="tv-energy-fill" class="energy-fill"></div></div>
+                            <span id="tv-accuracy-label" style="color:#facc15; font-weight:900; font-size:13px;"></span>
+                        </div>
+                        <div id="arena-podium-strip" class="podium-inline"></div>
+                        <div style="font-size:12px; font-weight:900; color:#fde047; background:rgba(234,179,8,0.2); border:1px solid #facc15; padding:2px 8px; border-radius:12px;">
+                            ⚡ 落後賽車自動開啟「金色渦輪護盾(1.5x~2x超車推進)」！
+                        </div>
+                    </div>
+                    <canvas id="race-track-canvas" width="1600" height="480" title="點擊賽道可手動測試隨機座號點火蓄力"></canvas>
+                </div>
+
+                <!-- 下方 40%：左側 70% 超大字題目與四選項 ＋ 右側 30% 行政配對與座號燈盤 -->
+                <div class="tv-bottom-deck">
+                    <!-- ◀ 左下 70%：超大字題目挑戰區 (上方放測驗過程按鈕) -->
+                    <div class="tv-question-deck">
+                        <div class="deck-ctrl-bar">
+                            <div style="display:flex; align-items:center; gap:5px; flex-wrap:wrap;">
+                                <button class="btn" style="background:#dfe6e9; color:#2d3436;" onclick="stepQuestion(-1, 'TV')">◀ 上一題</button>
+                                <button class="btn btn-orange" style="font-size:14px; padding:5px 12px;" onclick="revealCurrentAnswer('TV')">🏁 公布正解・賽車衝刺！</button>
+                                <button class="btn btn-blue" onclick="stepQuestion(1, 'TV')">下一題 ▶</button>
+                                <span id="tv-q-Counter" style="background:#f39c12; color:#fff; padding:3px 9px; border-radius:6px; font-weight:900; font-size:13px;">第 1 / 10 題</span>
+                                <span id="tv-fever-tag" style="display:none; background:linear-gradient(90deg,#ef4444,#f59e0b); color:#fff; padding:3px 8px; border-radius:6px; font-weight:900; font-size:12px;">🔥 雙倍氮氣題 (2x)</span>
+                                <span id="tv-tested-badge" class="tested-lock-badge">
+                                    🔒 已衝線(<span id="tv-tested-count">0</span>人)
+                                    <button class="btn-retest" onclick="retestCurrentQuestion('TV')">🔄重跑本題</button>
+                                </span>
+                            </div>
+                            <div style="display:flex; align-items:center; gap:4px; flex-wrap:wrap;">
+                                <button class="btn btn-purple" onclick="toggleTvMaskMode()"><span id="tv-mask-btn-text">🙈 蓋牌:開</span></button>
+                                <button class="btn" style="background:#00cec9; color:#000;" onclick="toggleExplanationMode()"><span id="tv-exp-btn-text">📖 解說:開</span></button>
+                                <button id="tv-fever-btn" class="btn btn-fever" onclick="toggleFeverRound('TV')">🔥 雙倍:自動</button>
+                                <button class="btn" style="background:#facc15; color:#1e293b;" onclick="toggleTvSummaryView()"><span id="tv-summary-btn-text">🏆 總表</span></button>
+                                <button class="btn btn-green" onclick="toggleTvFullscreen()">⛶ 全螢幕</button>
+                            </div>
+                        </div>
+
+                        <div class="tv-q-middle">
+                            <div id="tv-q-title" class="tv-q-title">25 × 12 = ？</div>
+                            <div id="tv-explanation-box" class="tv-explanation-box"></div>
+                        </div>
+
+                        <div id="tv-opts-grid" class="tv-opts-grid"></div>
+                    </div>
+
+                    <!-- ▶ 右下 30%：行政配對設定 ＋ 迷你座號狀態盤 -->
+                    <div class="tv-admin-deck">
+                        <div class="admin-compact-row">
+                            <div style="display:flex; align-items:center; gap:4px;">
+                                <span style="font-weight:900; font-size:12px; color:#38bdf8;">🔑代碼</span>
+                                <input type="text" id="tv-code-input" class="input-code" value="00000" maxlength="5" oninput="this.value=this.value.replace(/[^0-9]/g,'')">
+                                <button class="btn btn-blue" style="padding:3px 7px; font-size:11px;" onclick="loadCloudQuizFromTv()">📥載入</button>
+                            </div>
+                            <select id="tv-class-select" class="select-pill" onchange="onClassChange(this.value)"></select>
+                            <span id="tv-auto-quiz-badge" class="auto-quiz-badge">📝 測驗一</span>
+                        </div>
+
+                        <div class="admin-compact-row">
+                            <div class="tv-pair-box">
+                                <span style="color:#cbd5e1;">📡配對碼</span>
+                                <span id="tv-pair-display" class="tv-pair-digits">----</span>
+                                <button class="btn btn-orange" style="padding:2px 6px; font-size:11px;" onclick="openTvQrPairModal()">📱掃碼</button>
+                                <button class="btn" style="background:rgba(255,255,255,0.2); color:#fff; padding:2px 5px; font-size:11px;" onclick="generateNewTvPairCode()">🔄</button>
+                            </div>
+                            <div id="tv-connection-pill" class="sync-status-pill waiting" style="flex:1;">🔴 待連手機</div>
+                        </div>
+
+                        <div id="tv-stats-bar" class="stats-bar" style="margin:0;">
+                            <div class="stat-pill" style="background:#ff7675;">●1:<span id="tv-stat-1">?</span></div>
+                            <div class="stat-pill" style="background:#74b9ff;">●●2:<span id="tv-stat-2">?</span></div>
+                            <div class="stat-pill" style="background:#fdcb6e; color:#2d3436;">●●●3:<span id="tv-stat-3">?</span></div>
+                            <div class="stat-pill" style="background:#55efc4; color:#2d3436;">●●●●4:<span id="tv-stat-4">?</span></div>
+                        </div>
+
+                        <!-- 迷你座號燈盤 (方便確認誰還沒舉牌，點擊可手動切換答案) -->
+                        <div id="tv-seat-grid" class="mini-seat-matrix"></div>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- ================= 分頁 2：📱 手機掃描與遙控端 ================= -->
+    <div id="panel-scan" class="panel">
+        <div id="mobile-pair-banner" class="mobile-pair-gate">
+            <div style="flex:1; min-width:250px;">
+                <div id="mobile-pair-title" style="font-size:15px; font-weight:900; color:#c0392b; margin-bottom:4px;">
+                    ⚠️ 尚未連線至教室大電視！（目前為【離線圖卡測試模式】）
+                </div>
+                <div id="mobile-pair-desc" style="font-size:12px; color:#555; font-weight:bold;">
+                    👉 輸入大電視右下角 4 位數配對碼按連線，或點「📷 鏡頭掃碼配對」對準電視配對盾牌碼自動連線！
+                </div>
+            </div>
+            <div style="display:flex; gap:6px; align-items:center; flex-wrap:wrap;">
+                <input type="text" id="mobile-pair-input" class="input-code" placeholder="4位配對碼" maxlength="4" style="width:105px; font-size:17px; border-color:#e67e22;" oninput="this.value=this.value.replace(/[^0-9]/g,'')">
+                <button id="btn-connect-tv" class="btn btn-green" onclick="connectMobileToTv()">🔗 連線大電視</button>
+                <button id="btn-optical-pair-mode" class="btn btn-orange" onclick="enableOpticalPairingWindow()">📷 鏡頭掃碼配對</button>
+                <button id="btn-standalone-mode" class="btn" style="background:#dfe6e9; color:#2d3436;" onclick="enableStandaloneMobileQuiz()">📱 單機施測</button>
+            </div>
+        </div>
+
+        <div id="mobile-q-mismatch-banner">
+            <div style="font-size:14px; font-weight:900; color:#c0392b; flex:1;">
+                ⚠️ <b>雙機題號不同步：</b>大電視為【<span id="mismatch-tv-q">第 1 題</span>】，手機為【<span id="mismatch-mob-q">第 2 題</span>】！
+            </div>
+            <div style="display:flex; gap:6px; flex-wrap:wrap;">
+                <button class="btn btn-blue" onclick="resolveQuestionMismatch('FOLLOW_TV')">🔄 手機跟隨大電視</button>
+                <button class="btn btn-orange" onclick="resolveQuestionMismatch('FORCE_MOBILE')">📲 強制大電視跟隨手機</button>
+            </div>
+        </div>
+
+        <div id="mobile-active-quiz-zone" style="display:none;">
+            <div class="quiz-bar">
+                <div class="quiz-input-group">
+                    <span style="font-weight:900; color:#1e3799;">🔑 代碼：</span>
+                    <input type="text" id="challenge-code" class="input-code" value="00000" maxlength="5" oninput="this.value=this.value.replace(/[^0-9]/g,'')">
+                    <button class="btn btn-blue" onclick="loadCloudQuiz()">📥 載入</button>
+                    <label style="font-weight:900; color:#2d3436; font-size:12px;">🏫 班級：
+                        <select id="active-class-select" class="select-pill" onchange="onClassChange(this.value)"></select>
+                    </label>
+                    <span id="mobile-auto-quiz-badge" class="auto-quiz-badge">📝 本場次：測驗一</span>
+                    <div class="class-size-pill">
+                        <span>👥 <strong id="lbl-class-size" style="color:#0984e3;">28</strong>人</span>
+                        <input type="range" id="slider-class-size" min="10" max="100" value="28" oninput="updateClassSize(this.value)" style="width:70px; cursor:pointer;">
+                    </div>
+                </div>
+                <div class="quiz-input-group">
+                    <button id="btn-tv-mask-toggle" class="btn btn-purple" onclick="toggleTvMaskMode()">🙈 蓋牌：開啟</button>
+                    <button id="btn-mob-exp-toggle" class="btn" style="background:#00cec9; color:#000;" onclick="toggleExplanationMode()">📖 解說：開啟</button>
+                    <button id="btn-mob-fever-toggle" class="btn btn-fever" onclick="toggleFeverRound('MOBILE')">🔥 雙倍氮氣</button>
+                    <button id="btn-mob-summary-toggle" class="btn" style="background:#facc15; color:#1e293b;" onclick="toggleTvSummaryView()">🏆 電視總表</button>
+                    <button id="btn-mode-num" class="btn" style="background:#dfe6e9;" onclick="toggleLabelMode()">🔢 1/2/3/4</button>
+                    <button class="btn btn-green" onclick="uploadClassSessionToGAS()">📤 結算並上傳成績</button>
+                </div>
+            </div>
+
+            <div id="question-banner" class="question-banner">
+                <div style="display:flex; justify-content:space-between; align-items:center; flex-wrap:wrap; gap:6px;">
+                    <div style="display:flex; align-items:center; gap:6px; flex-wrap:wrap;">
+                        <span id="q-topic-badge" style="background:#1e3799; color:#fff; padding:3px 8px; border-radius:6px; font-size:12px; font-weight:bold;">二位數乘法挑戰</span>
+                        <span id="q-title-display" class="question-title">第 1 題：25 × 12 = ？</span>
+                        <span id="mob-tested-badge" class="tested-lock-badge">
+                            🔒 已測驗鎖定 <button class="btn-retest" onclick="retestCurrentQuestion('MOBILE')">🔄 重測本題</button>
+                        </span>
+                    </div>
+                    <div style="display:flex; gap:5px; align-items:center; flex-wrap:wrap;">
+                        <select id="correct-ans-select" onchange="onManualCorrectChange(this.value, 'MOBILE')" style="padding:4px 7px; border-radius:6px; font-weight:bold;">
+                            <option value="0">🙈 先隱藏正解 (作答中)</option>
+                            <option value="1">● 公布正解：選項 1 (A)</option>
+                            <option value="2">●● 公布正解：選項 2 (B)</option>
+                            <option value="3">●●● 公布正解：選項 3 (C)</option>
+                            <option value="4">●●●● 公布正解：選項 4 (D)</option>
+                        </select>
+                        <button class="btn btn-orange" onclick="revealCurrentAnswer('MOBILE')">🏁 公布正解・衝刺</button>
+                        <button class="btn" style="background:#dfe6e9;" onclick="stepQuestion(-1, 'MOBILE')">◀ 上一題</button>
+                        <button class="btn btn-blue" onclick="stepQuestion(1, 'MOBILE')">下一題 ▶</button>
+                    </div>
+                </div>
+                <div id="mobile-explanation-box" class="mobile-explanation-box"></div>
+                <div id="q-opts-container" class="question-opts"></div>
+                <div id="teacher-cheat-sheet" class="teacher-cheat-sheet">
+                    <span id="cheat-sheet-ans">👩‍🏫 <b>教師小抄：</b>正解為【 ●● (2) 300 】</span>
+                    <span id="cheat-sheet-exp" style="color:#dfe6e9; font-size:12px;">💡 把 12 拆成 4 × 3，先算 25 × 4 = 100，再乘以 3 就是 300！</span>
+                </div>
+            </div>
+        </div>
+
+        <div class="scanner-layout">
+            <div>
+                <div id="mobile-sync-hud-bar" class="mobile-sync-hud-bar offline">
+                    ⚪ 離線圖卡測試模式（請先於上方輸入 4 位配對碼連線大電視）
+                </div>
+                <div class="camera-box">
+                    <video id="video-preview" playsinline muted></video>
+                    <canvas id="scan-canvas" width="960" height="720"></canvas>
+                    <div class="scan-hud-tip">
+                        <span id="debug-status">💡 首次對準約 0.5 秒鎖定並點火；改答案需穩定對準 1.2 秒</span>
+                        <label style="pointer-events:auto; cursor:pointer;"><input type="checkbox" id="chk-debug" checked> 雷達框</label>
+                    </div>
+                </div>
+                <input type="file" id="native-camera-input" accept="image/*" capture="environment" style="display:none;" onchange="handleNativeCameraSnap(event)">
+                <div class="camera-controls">
+                    <div style="display:flex; gap:6px; align-items:center; flex-wrap:wrap;">
+                        <button id="btn-start-cam" class="btn btn-green" onclick="startCamera()">▶️ 啟動即時掃描</button>
+                        <button id="btn-stop-cam" class="btn btn-red" onclick="stopCamera()" style="display:none;">⏹️ 停止掃描</button>
+                        <button class="btn btn-blue" onclick="triggerNativeCamera()">📸 iPad / 快門秒掃</button>
+                        <label style="font-size:12px; font-weight:bold; cursor:pointer;"><input type="checkbox" id="chk-lock-answer"> 🔒 鎖定首次舉牌</label>
+                    </div>
+                    <div class="zoom-group">
+                        <span style="font-size:12px; font-weight:bold;">🔭 變焦：</span>
+                        <button class="zoom-btn active" onclick="setZoom(1, this)">1x</button>
+                        <button class="zoom-btn" onclick="setZoom(1.5, this)">1.5x</button>
+                        <button class="zoom-btn" onclick="setZoom(2, this)">2x</button>
+                        <button class="zoom-btn" onclick="setZoom(3, this)">3x</button>
+                    </div>
+                </div>
+                <div id="ipad-snap-helper">
+                    <div style="font-size:12px; font-weight:bold; color:#006266; flex:1;">🍎 <b>iPad 專屬無敵模式：</b> 呼叫原生相機拍一張照，0.1 秒辨識全班！</div>
+                    <button class="btn btn-green" onclick="triggerNativeCamera()">📸 開啟 iPad 相機拍全班</button>
+                </div>
+            </div>
+
+            <div class="board-card">
+                <div style="display:flex; justify-content:space-between; align-items:center; margin-bottom:4px;">
+                    <h3 style="margin:0; font-size:15px;">
+                        📊 手機監控看板 (<span id="answered-count">0</span>/<span id="total-seat-count">28</span>)
+                        <span id="accuracy-badge" style="font-size:12px; color:#00b894;"></span>
+                    </h3>
+                    <button class="btn btn-red" style="padding:4px 8px; font-size:11px;" onclick="retestCurrentQuestion('MOBILE')">🧹 清空/重測本題</button>
+                </div>
+                <div style="font-size:12px; color:#636e72; margin-bottom:6px; font-weight:bold; display:flex; justify-content:space-between;">
+                    <span>💡 已計分題數：<strong id="recorded-q-count" style="color:#0984e3;">0</strong> 題</span>
+                    <span style="cursor:pointer; color:#d63031; text-decoration:underline;" onclick="resetSessionCumulative()">重置整場累計</span>
+                </div>
+                <div class="stats-bar">
+                    <div class="stat-pill" style="background:#ff7675;">● 1: <span id="stat-1">0</span></div>
+                    <div class="stat-pill" style="background:#74b9ff;">●● 2: <span id="stat-2">0</span></div>
+                    <div class="stat-pill" style="background:#fdcb6e; color:#2d3436;">●●● 3: <span id="stat-3">0</span></div>
+                    <div class="stat-pill" style="background:#55efc4; color:#2d3436;">●●●● 4: <span id="stat-4">0</span></div>
+                </div>
+                <div id="seat-grid" class="seat-grid"></div>
+            </div>
+        </div>
+    </div>
+
+    <!-- ================= 分頁 3：🖥️ 30 號同框壓力測試牆 ================= -->
+    <div id="panel-wall" class="panel">
+        <div id="wall-fullscreen-target" class="wall-box">
+            <div style="display:flex; justify-content:space-between; align-items:center; flex-wrap:wrap; gap:8px;">
+                <div>
+                    <h2 style="margin:0 0 4px 0; font-size:18px;">🖥️ 全班 30 號同框光學測試牆 (點擊單張卡片可切換 1~4 選項)</h2>
+                    <span style="font-size:12px; color:#636e72; font-weight:bold;">💡 已套用「相鄰座號方向交錯加密」，拿手機對準螢幕一掃即可見證大電視賽車點火起跑！</span>
+                </div>
+                <div style="display:flex; gap:5px; flex-wrap:wrap;">
+                    <button class="btn btn-red" onclick="setAllWallCards(1)">全班選 1(A)</button>
+                    <button class="btn btn-blue" onclick="setAllWallCards(2)">全班選 2(B)</button>
+                    <button class="btn btn-orange" onclick="setAllWallCards(3)">全班選 3(C)</button>
+                    <button class="btn btn-green" onclick="setAllWallCards(4)">全班選 4(D)</button>
+                    <button class="btn btn-purple" onclick="randomizeWallCards()">🎲 隨機亂數</button>
+                    <button class="btn" style="background:#dfe6e9;" onclick="toggleWallTilt()">🔀 模擬微歪斜(±12°)</button>
+                    <button class="btn btn-dark" onclick="toggleWallFullscreen()">⛶ 全螢幕放大</button>
+                </div>
+            </div>
+            <div id="wall-stage" class="wall-stage"></div>
+        </div>
+    </div>
+
+    <!-- ================= 分頁 4：教師管理與智慧班級產生器 ================= -->
+    <div id="panel-admin" class="panel">
+        <div class="admin-top-bar">
+            <div style="display:flex; align-items:center; gap:8px; flex-wrap:wrap;">
+                <h2 style="margin:0; color:#2c3e50; font-size:19px;">👩‍🏫 教師雲端管理與補救教學中心</h2>
+                <span id="admin-active-code-badge" class="active-room-badge">🔑 當前代碼：00000</span>
+                <button class="btn btn-blue" onclick="openTeacherRoomModal()">🔄 切換 / 新建 5 位數代碼</button>
+            </div>
+            <div style="display:flex; gap:6px;">
+                <button id="admin-tab-records" class="btn btn-purple" onclick="switchAdminSubTab('records')">📊 1. 班級成績與錯題診斷</button>
+                <button id="admin-tab-tasks" class="btn btn-orange" onclick="switchAdminSubTab('tasks')">✏️ 2. 班級清單與題庫設定</button>
+                <button id="admin-tab-api" class="btn btn-dark" style="display:none;" onclick="switchAdminSubTab('api')">🔗 3. 試算表與協作平台網址</button>
+            </div>
+        </div>
+
+        <div id="admin-sub-records">
+            <div class="admin-box">
+                <div style="display:flex; justify-content:space-between; align-items:center; flex-wrap:wrap; gap:8px; margin-bottom:10px;">
+                    <h3 style="margin:0;">📊 班級作答紀錄與錯題分析（自動滿分 100 分制校正）</h3>
+                    <div style="display:flex; gap:6px; flex-wrap:wrap;">
+                        <button class="btn btn-purple" onclick="openDiagnosticModal()">🩺 錯題統計與補救教學分析</button>
+                        <button class="btn btn-blue" onclick="fetchTeacherRecords()">🔄 重新整理</button>
+                        <button class="btn btn-green" onclick="exportRecordsCSV()">📥 匯出 CSV</button>
+                        <button class="btn btn-red" onclick="executeClearRoomRecords()">🧹 清空本代碼紀錄</button>
+                    </div>
+                </div>
+                <div style="display:flex; gap:8px; align-items:center; flex-wrap:wrap; background:#eef6ff; border:1.5px solid #74b9ff; padding:8px 12px; border-radius:8px; margin-bottom:10px;">
+                    <label style="font-weight:900; color:#1e3799;">🏫 班級：<select id="admin-filter-class" onchange="renderTeacherTable()" style="padding:5px 8px; border-radius:6px; font-weight:bold;"><option value="ALL">全部任教班級</option></select></label>
+                    <label style="font-weight:900; color:#1e3799;">📝 場次：<select id="admin-filter-quiz" onchange="renderTeacherTable()" style="padding:5px 8px; border-radius:6px; font-weight:bold;"><option value="ALL">全部測驗場次</option></select></label>
+                    <label style="font-weight:900; color:#2d3436;">📋 排序：<select id="admin-view-mode" onchange="renderTeacherTable()" style="padding:5px 8px; border-radius:6px; font-weight:bold;"><option value="best_seat">🔢 座號成績冊</option><option value="best_score">🏆 最高分榮譽榜</option><option value="all_logs">📝 完整歷程明細</option></select></label>
+                    <span id="admin-record-summary" style="font-weight:bold; color:#d35400; margin-left:auto;">請點擊重新整理載入紀錄</span>
+                </div>
+                <div class="table-container"><table><thead id="admin-records-thead"></thead><tbody id="admin-records-tbody"></tbody></table></div>
+            </div>
+        </div>
+
+        <div id="admin-sub-tasks" style="display:none;">
+            <div class="admin-box">
+                <div style="display:flex; justify-content:space-between; align-items:center; flex-wrap:wrap; gap:8px; margin-bottom:10px; border-bottom:2px solid #f1f2f6; padding-bottom:8px;">
+                    <h3 style="margin:0;">✏️ 編輯代碼 <span id="task-panel-code-label" style="color:#e74c3c;">[00000]</span> 的任教班級與專屬題庫</h3>
+                    <button class="btn btn-green" onclick="saveRoomConfigToCloud()">☁️ 儲存並發布設定至雲端</button>
+                </div>
+                <div style="display:flex; gap:12px; flex-wrap:wrap; align-items:center; margin-bottom:12px;">
+                    <label style="font-weight:bold;">🏷️ 單元名稱：<input type="text" id="set-title" value="二位數乘法挑戰" style="padding:5px 8px; border-radius:6px; border:2px solid #bdc3c7; font-weight:bold; width:190px;"></label>
+                    <label style="font-weight:bold;">👥 預設班級人數：<input type="number" id="set-class-size" min="10" max="100" value="28" onchange="updateClassSize(this.value)" style="padding:5px 8px; border-radius:6px; border:2px solid #bdc3c7; font-weight:bold; width:70px;"></label>
+                </div>
+                <div class="class-builder-box">
+                    <h4 style="margin:0 0 6px 0; color:#1e3799; font-size:15px;">🏫 任教班級清單設定器</h4>
+                    <div class="builder-row"><span style="font-weight:900; font-size:12px; color:#0984e3;">步驟 1 選年級：</span><div id="grade-chips-wrap" style="display:flex; gap:4px; flex-wrap:wrap;"></div></div>
+                    <div class="builder-row"><span style="font-weight:900; font-size:12px; color:#00b894;">步驟 2 點班別加入：</span><div id="class-suffix-wrap" style="display:flex; gap:4px; flex-wrap:wrap;"></div></div>
+                    <div class="builder-row" style="margin-top:6px; padding-top:6px; border-top:1px dashed #bdc3c7;">
+                        <span style="font-weight:900; font-size:12px;">✏️ 手動輸入：</span>
+                        <input type="text" id="custom-class-input" placeholder="例如：501班, 科學社團" style="padding:4px 8px; border-radius:6px; border:1.5px solid #bdc3c7; width:220px; font-weight:bold;">
+                        <button class="btn btn-blue" onclick="addCustomClassesFromInput()">➕ 加入清單</button>
+                    </div>
+                    <div id="configured-classes-list" style="display:flex; gap:6px; flex-wrap:wrap; margin-top:6px;"></div>
+                </div>
+                <div class="quick-paste-box">
+                    <h4 style="margin:0 0 4px 0; color:#0984e3;">⚡ 一鍵快貼題庫（格式：<code>題目 | 選項1 | 選項2 | 選項3 | 選項4 | 正解數字(1~4) | 題目解說</code>）</h4>
+                    <textarea id="quick-paste-textarea" placeholder="25 × 12 = ？ | 250 | 300 | 320 | 350 | 2 | 把 12 拆成 4 × 3，先算 25 × 4 = 100，再乘以 3 就是 300！"></textarea>
+                    <div style="display:flex; justify-content:flex-end; margin-top:5px;"><button class="btn btn-blue" onclick="processQuickPaste()">📥 解析並填入下方表格</button></div>
+                </div>
+                <div style="display:flex; justify-content:space-between; align-items:center; margin-bottom:8px;">
+                    <button class="btn btn-blue" onclick="addQuestionRow()">➕ 新增一題選擇題</button>
+                    <button class="btn btn-green" onclick="saveRoomConfigToCloud()">☁️ 儲存並發布設定至雲端</button>
+                </div>
+                <div class="table-container">
+                    <table>
+                        <thead><tr><th style="width:20%;">題目敘述</th><th style="width:11%;">● 選項 1 (A)</th><th style="width:11%;">●● 選項 2 (B)</th><th style="width:11%;">●●● 選項 3 (C)</th><th style="width:11%;">●●●● 選項 4 (D)</th><th style="width:8%;">正解</th><th style="width:22%;">💡 題目解說</th><th style="width:6%;">操作</th></tr></thead>
+                        <tbody id="settings-tbody"></tbody>
+                    </table>
+                </div>
+            </div>
+        </div>
+
+        <div id="admin-sub-api" style="display:none;">
+            <div class="admin-box" style="border:3px solid #6c5ce7;">
+                <h3 style="color:#6c5ce7; margin-top:0;">👑 最高管理員專屬：Google 試算表後端與協作平台網址設定</h3>
+                <div style="margin-bottom:10px;">
+                    <label style="font-weight:bold; display:block; margin-bottom:4px;">🔗 Google Apps Script 試算表後端網址：</label>
+                    <div style="display:flex; gap:8px;"><input type="text" id="gas-url-input" style="flex:1; padding:7px; border-radius:6px; border:2px solid #bdc3c7; font-weight:bold;"><button class="btn btn-green" onclick="saveGasUrl()">💾 儲存後端網址</button></div>
+                </div>
+                <div>
+                    <label style="font-weight:bold; display:block; margin-bottom:4px;">📱 協作平台網址 (供產生配對 QR 碼)：</label>
+                    <div style="display:flex; gap:8px;"><input type="text" id="site-url-input" style="flex:1; padding:7px; border-radius:6px; border:2px solid #bdc3c7; font-weight:bold;"><button class="btn btn-blue" onclick="saveSiteUrl()">💾 儲存網頁網址</button></div>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- 彈窗區 -->
+    <div id="tv-qr-pair-modal" class="overlay">
+        <div class="modal-card" style="max-width: 680px; text-align: center;">
+            <div style="display:flex; justify-content:space-between; align-items:center; border-bottom:2px solid #eee; padding-bottom:8px; margin-bottom:12px;">
+                <h2 style="margin:0; color:#1e3799; font-size:20px;">📡 手機快速配對連線中心（配對碼：<span id="qr-modal-pair-code" style="color:#e74c3c;">----</span>）</h2>
+                <button class="btn btn-red" onclick="document.getElementById('tv-qr-pair-modal').style.display='none'">✖ 關閉</button>
+            </div>
+            <div style="display:grid; grid-template-columns: repeat(auto-fit, minmax(240px, 1fr)); gap:16px; align-items:center;">
+                <div style="background:#f8f9fa; padding:14px; border-radius:12px; border:2px solid #dfe6e9;">
+                    <div style="font-weight:900; color:#0984e3; font-size:15px; margin-bottom:6px;">步驟 1：手機掃描開啟網頁</div>
+                    <div style="font-size:12px; color:#555; margin-bottom:8px; font-weight:bold;">掃描下方 QR Code 將直接開啟網頁並自動切至「手機掃描遙控端」！</div>
+                    <img id="tv-qr-img" src="" alt="QR Code" style="width:190px; height:190px; border:4px solid #fff; border-radius:10px;">
+                </div>
+                <div style="background:#eef6ff; padding:14px; border-radius:12px; border:2px solid #74b9ff;">
+                    <div style="font-weight:900; color:#d63031; font-size:15px; margin-bottom:6px;">步驟 2：點「📷鏡頭掃碼配對」照此秒連</div>
+                    <div style="font-size:12px; color:#555; margin-bottom:8px; font-weight:bold;">免打字！手機鏡頭對準下方盾牌碼自動帶入 4 位配對碼！</div>
+                    <canvas id="tv-optical-pair-canvas" width="200" height="200" style="background:#fff; border-radius:12px;"></canvas>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <div id="teacher-login-modal" class="overlay">
+        <div class="small-modal-card">
+            <h2 style="margin:0 0 8px 0; color:#2c3e50;">👩‍🏫 教師身分驗證</h2>
+            <p style="font-size:13px; color:#666; margin:0 0 12px 0;">請輸入您的教師專屬通行碼以進入管理與出題中心：</p>
+            <input type="password" id="teacher-pin-modal-input" placeholder="請輸入教師專屬通行碼" maxlength="24" style="width:100%; padding:9px; font-size:18px; text-align:center; border:2px solid #0984e3; border-radius:8px; margin-bottom:12px; font-weight:bold;" onkeydown="if(event.key==='Enter') verifyTeacherStep1()">
+            <div style="display:flex; justify-content:center; gap:8px;">
+                <button class="btn" style="background:#95a5a6; color:#fff;" onclick="document.getElementById('teacher-login-modal').style.display='none'">取消</button>
+                <button class="btn btn-green" onclick="verifyTeacherStep1()">下一步 ➔</button>
+            </div>
+        </div>
+    </div>
+
+    <div id="teacher-room-modal" class="overlay">
+        <div class="small-modal-card">
+            <h2 style="margin:0 0 10px 0; color:#2c3e50;">☁️ 挑戰代碼管理</h2>
+            <div class="mode-switch-tabs">
+                <button id="mode-tab-create" class="mode-tab active" onclick="switchRoomModalMode('create')">✨ 建立新代碼</button>
+                <button id="mode-tab-maintain" class="mode-tab" onclick="switchRoomModalMode('maintain')">🛠️ 維護現有代碼</button>
+            </div>
+            <div id="room-modal-create-panel" style="text-align:left;">
+                <div style="background:#f8f9fa; padding:8px; border-radius:8px; border:1px solid #e9ecef; margin-bottom:8px;">
+                    <div style="font-size:12px; font-weight:bold; display:flex; justify-content:space-between;"><span>💡 未使用的推薦代碼：</span><span style="color:#0984e3; cursor:pointer;" onclick="fetchSuggestedCodes()">🔄 換一批</span></div>
+                    <div id="suggested-codes-container" style="min-height:28px; display:flex; flex-wrap:wrap; justify-content:center; margin-top:4px;"></div>
+                </div>
+                <div style="margin-bottom:8px;">
+                    <label style="font-size:13px; font-weight:900; display:block;">🔑 設定 5 位數挑戰代碼：</label>
+                    <input type="text" id="create-room-code-input" maxlength="5" placeholder="例如: 50101" oninput="this.value=this.value.replace(/[^0-9]/g,'')" style="width:100%; padding:8px; font-size:18px; text-align:center; border:2px solid #00b894; border-radius:7px; font-weight:bold;">
+                </div>
+                <div style="margin-bottom:12px;">
+                    <label style="font-size:13px; font-weight:900; display:block;">🔐 設定管理密碼 <span style="color:#e74c3c;">*必填</span>：</label>
+                    <input type="password" id="create-room-pin-input" maxlength="12" placeholder="請自訂管理密碼" style="width:100%; padding:8px; font-size:16px; text-align:center; border:2px solid #bdc3c7; border-radius:7px; font-weight:bold;">
+                </div>
+                <div style="display:flex; justify-content:center; gap:8px;">
+                    <button class="btn" style="background:#95a5a6; color:#fff;" onclick="document.getElementById('teacher-room-modal').style.display='none'">取消</button>
+                    <button id="btn-submit-create-room" class="btn btn-green" onclick="submitCreateRoom()">✨ 建立代碼並進入後台</button>
+                </div>
+            </div>
+            <div id="room-modal-maintain-panel" style="display:none; text-align:left;">
+                <div style="margin-bottom:8px;">
+                    <label style="font-size:13px; font-weight:900; display:block;">🔑 輸入已建立的 5 位數代碼：</label>
+                    <input type="text" id="maintain-room-code-input" value="00000" maxlength="5" oninput="this.value=this.value.replace(/[^0-9]/g,'')" style="width:100%; padding:8px; font-size:18px; text-align:center; border:2px solid #0984e3; border-radius:7px; font-weight:bold;">
+                </div>
+                <div style="margin-bottom:12px;">
+                    <label style="font-size:13px; font-weight:900; display:block;">🔐 輸入管理密碼：</label>
+                    <input type="password" id="maintain-room-pin-input" maxlength="12" placeholder="請輸入管理密碼" onkeydown="if(event.key==='Enter') submitMaintainRoom()" style="width:100%; padding:8px; font-size:16px; text-align:center; border:2px solid #bdc3c7; border-radius:7px; font-weight:bold;">
+                </div>
+                <div style="display:flex; justify-content:center; gap:8px;">
+                    <button class="btn" style="background:#95a5a6; color:#fff;" onclick="document.getElementById('teacher-room-modal').style.display='none'">取消</button>
+                    <button class="btn btn-blue" onclick="submitMaintainRoom()">🔓 驗證並進入後台</button>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <div id="diagnostic-modal" class="overlay">
+        <div class="modal-card">
+            <div style="display:flex; justify-content:space-between; align-items:center; margin-bottom:8px; border-bottom:2px solid #eee; padding-bottom:6px;">
+                <h2 style="margin:0; color:#6c5ce7; font-size:19px;">🩺 班級錯題統計與補救教學分析報告</h2>
+                <button class="btn btn-red" onclick="document.getElementById('diagnostic-modal').style.display='none'">✖ 關閉</button>
+            </div>
+            <div id="diagnostic-report-content" style="overflow-y:auto; flex:1;"></div>
+        </div>
+    </div>
+
+    <script>
+        const APP_VERSION = "v1.2.1";
+        const DEFAULT_GAS_URL = "https://script.google.com/macros/s/AKfycbzoaZ--EPlQJ49p8EtgKDH5cbNg4DA6YXiVvL2Q2vQMe69ubfVZc46-OVh2UIZgPg/exec";
+        const DEFAULT_SITE_URL = "https://sites.google.com/view/linyuchi/snap%E8%88%89%E7%89%8C%E4%BA%92%E5%8B%95%E6%8C%91%E6%88%B0%E5%8D%80/PopQuiz";
+
+        let classSize = 28;
+        let useNumericLabels = true;
+        let tvMaskAnswersBeforeReveal = true;
+        let showExplanationOnReveal = true;
+        let showTvSummaryModal = false;
+        let summaryDisplayMode = "ARENA";
+        let currentQIndex = 0;
+
+        let manualFeverOverrides = {};
+        let justScannedSeats = {};
+        let scanParticles = [];
+
+        let activePairCode = "";
+        let isMobilePaired = false;
+        let isStandaloneQuizMode = false;
+        let allowOpticalPairUntil = 0;
+        let opticalPairConfirm = { code: "", count: 0 };
+        let hasQuestionMismatch = false;
+        let remoteTvQIndex = 0;
+        let currentQuizNoStr = "測驗一";
+
+        let tvSeqCounter = 0, lastSeenTvSeq = -1;
+        let mobSeqCounter = 0, lastSeenMobSeq = -1;
+
+        let questionAnswersMemory = {};
+        let questionLockedState = {};
+        let selectedBuilderGrade = "五年";
+
+        let adminSession = { roomCode: "00000", roomPin: "", teacherPass: "", teacherName: "", isSuperAdmin: false, myRooms: [], remainingQuota: 5, maxQuota: 5 };
+        let cachedTeacherData = { roomCode: "00000", leaderboard: [], allLogs: [] };
+
+        const SEAT_DIR_PERMUTATIONS = [
+            ['1', '4', '3', '2'],
+            ['2', '1', '4', '3'],
+            ['3', '1', '2', '4'],
+            ['4', '2', '1', '3']
+        ];
+        function getSeatRotationMap(seatNo) { return SEAT_DIR_PERMUTATIONS[(seatNo - 1) % SEAT_DIR_PERMUTATIONS.length]; }
+        function getFrontDegreeForSeatAnswer(seatNo, targetAnsNum) {
+            const map = getSeatRotationMap(seatNo);
+            const rotIdx = map.indexOf(String(targetAnsNum));
+            return rotIdx === 0 ? 0 : (rotIdx === 1 ? 90 : (rotIdx === 2 ? 180 : -90));
+        }
+
+        function encodePairCodeTo16Bits(pairStr) {
+            const num = parseInt(pairStr, 10) || 1000;
+            const val14 = (num ^ 0x2A5A) & 0x3FFF;
+            let ones = 0, temp = val14;
+            while (temp) { ones += temp & 1; temp >>= 1; }
+            const p1 = (ones % 2 === 0) ? 1 : 0;
+            const p0 = ((num % 3) === 0) ? 1 : 0;
+            return (val14 << 2) | (p1 << 1) | p0;
+        }
+
+        function decode16BitsToPairCode(bits16) {
+            const val14 = (bits16 >> 2) & 0x3FFF;
+            const p1 = (bits16 >> 1) & 1;
+            const p0 = bits16 & 1;
+            let ones = 0, temp = val14;
+            while (temp) { ones += temp & 1; temp >>= 1; }
+            if (p1 !== ((ones % 2 === 0) ? 1 : 0)) return null;
+            const num = val14 ^ 0x2A5A;
+            if (num < 1000 || num > 9999) return null;
+            if (p0 !== (((num % 3) === 0) ? 1 : 0)) return null;
+            return String(num);
+        }
+
+        function getDefaultParams() {
+            return {
+                title: "二位數乘法挑戰",
+                classSize: 28,
+                classes: ["五年一班", "五年二班", "五年三班", "五年甲班", "五年乙班"],
+                tasks: [
+                    { task: "25 × 12 = ？", options: ["250", "300", "320", "350"], answer: 2, explanation: "💡 速算秘訣：把 12 拆成 4 × 3，先算黃金拍檔 25 × 4 = 100，再乘以 3 就是 300！", correct: ["300"], wrong: ["250", "320", "350"] },
+                    { task: "15 × 14 = ？", options: ["210", "190", "200", "220"], answer: 1, explanation: "💡 速算秘訣：把 14 拆成 2 × 7，先算 15 × 2 = 30，再算 30 × 7 = 210！", correct: ["210"], wrong: ["190", "200", "220"] },
+                    { task: "32 × 20 = ？", options: ["64", "600", "640", "720"], answer: 3, explanation: "💡 觀念解析：先算 32 × 2 = 64，因為乘數是 2 個十（20），尾數補上 1 個 0 變成 640！", correct: ["640"], wrong: ["64", "600", "720"] },
+                    { task: "18 × 15 = ？", options: ["240", "260", "280", "270"], answer: 4, explanation: "💡 速算秘訣：把 18 拆成 9 × 2，先算 2 × 15 = 30，再算 9 × 30 = 270！", correct: ["270"], wrong: ["240", "260", "280"] },
+                    { task: "24 × 11 = ？", options: ["244", "264", "254", "274"], answer: 2, explanation: "💡 乘以 11 口訣：「頭尾放兩邊，相加放中間」➔ 2 與 4 放兩邊，中間 2+4=6，答案 264！", correct: ["264"], wrong: ["244", "254", "274"] },
+                    { task: "45 × 12 = ？", options: ["540", "480", "520", "560"], answer: 1, explanation: "💡 速算秘訣：把 12 拆成 2 × 6，先算 45 × 2 = 90，再算 90 × 6 = 540！", correct: ["540"], wrong: ["480", "520", "560"] },
+                    { task: "35 × 16 = ？", options: ["520", "540", "560", "580"], answer: 3, explanation: "💡 速算秘訣：把 16 拆成 2 × 8，先算 35 × 2 = 70，再算 70 × 8 = 560！", correct: ["560"], wrong: ["520", "540", "580"] },
+                    { task: "22 × 30 = ？", options: ["630", "660", "690", "600"], answer: 2, explanation: "💡 觀念解析：22 × 3 = 66，尾數補上 1 個 0 就是 660！", correct: ["660"], wrong: ["630", "690", "600"] },
+                    { task: "16 × 25 = ？", options: ["350", "380", "420", "400"], answer: 4, explanation: "💡 速算秘訣：把 16 拆成 4 × 4，4 × (4 × 25) = 4 × 100 = 400！", correct: ["400"], wrong: ["350", "380", "420"] },
+                    { task: "36 × 15 = ？", options: ["540", "520", "480", "560"], answer: 1, explanation: "💡 速算秘訣：把 36 拆成 18 × 2，先算 2 × 15 = 30，再算 18 × 30 = 540！", correct: ["540"], wrong: ["520", "480", "560"] }
+                ]
+            };
+        }
+        let params = getDefaultParams();
+
+        function getGasUrl() {
+            const saved = localStorage.getItem('POPQUIZ_SHOWDOWN_GAS_URL');
+            return (saved && saved.startsWith('http')) ? saved : DEFAULT_GAS_URL;
+        }
+        function saveGasUrl() {
+            const val = document.getElementById('gas-url-input').value.trim();
+            if (val.startsWith('http')) { localStorage.setItem('POPQUIZ_SHOWDOWN_GAS_URL', val); showToast('✅ 已成功儲存試算表後端網址！'); }
+        }
+        function getSiteUrl() {
+            const saved = localStorage.getItem('POPQUIZ_SHOWDOWN_SITE_URL_V12');
+            return (saved && saved.startsWith('http')) ? saved : DEFAULT_SITE_URL;
+        }
+        function saveSiteUrl() {
+            const val = document.getElementById('site-url-input').value.trim();
+            if (val.startsWith('http')) { localStorage.setItem('POPQUIZ_SHOWDOWN_SITE_URL_V12', val); showToast('✅ 已成功儲存協作平台網址！'); }
+        }
+        function showToast(msg) {
+            const el = document.getElementById('toast-msg'); el.textContent = msg; el.style.display = 'block';
+            clearTimeout(el._timer); el._timer = setTimeout(() => { el.style.display = 'none'; }, 3400);
+        }
+        function isMobileOrTabletDevice() {
+            const ua = navigator.userAgent || "";
+            if (/Android|iPhone|iPad|iPod|Mobile|Tablet/i.test(ua)) return true;
+            return (navigator.platform === 'MacIntel' && navigator.maxTouchPoints > 1);
+        }
+
+        function isFeverQuestion(qIdx) {
+            if (typeof manualFeverOverrides[qIdx] === 'boolean') return manualFeverOverrides[qIdx];
+            const totalTasks = (params.tasks || []).length;
+            return (totalTasks >= 3 && qIdx >= totalTasks - 2) || ((qIdx + 1) % 5 === 0);
+        }
+
+        function toggleFeverRound(callerRole = 'TV') {
+            const cur = isFeverQuestion(currentQIndex);
+            manualFeverOverrides[currentQIndex] = !cur;
+            playFeverSound(!cur);
+            updateScoreBoard(true);
+            if (callerRole === 'TV' || document.getElementById('panel-tv').classList.contains('active')) pushTvMailboxToCloud();
+            else pushMobileMailboxToCloud(true);
+            showToast(!cur ? `🔥 第 ${currentQIndex + 1} 題已開啟【雙倍氮氣衝刺 (2x)】！` : `❄️ 已關閉本題雙倍氮氣`);
+        }
+
+        const TIER_LIST = [
+            { min: 0,    icon: '🥉', title: '新秀車手' },
+            { min: 1500, icon: '🥈', title: '渦輪車手' },
+            { min: 3200, icon: '🥇', title: '黃金車神' },
+            { min: 5200, icon: '💎', title: '鑽石傳奇' },
+            { min: 7500, icon: '👑', title: '極速車王' }
+        ];
+        function getTierInfoByScore(pts) {
+            let t = TIER_LIST[0];
+            for (let i = 0; i < TIER_LIST.length; i++) { if (pts >= TIER_LIST[i].min) t = TIER_LIST[i]; }
+            return t;
+        }
+
+        function computeArenaStandings() {
+            const tasks = params.tasks || [];
+            const stats = {};
+            for (let s = 1; s <= classSize; s++) {
+                stats[s] = { seat: s, arenaPoints: 0, streak: 0, maxStreak: 0, shieldCharged: false, comebackCount: 0, comebackPoints: 0, lastDelta: 0, lastTag: '', correct: 0, wrong: 0 };
+            }
+            const qIndices = Object.keys(questionAnswersMemory).map(Number).filter(k => !isNaN(k) && Object.keys(questionAnswersMemory[k] || {}).length > 0).sort((a, b) => a - b);
+            qIndices.forEach(qIdx => {
+                const q = tasks[qIdx]; if (!q) return;
+                const isRevealed = !!questionLockedState[qIdx] || (qIdx === currentQIndex && document.getElementById('correct-ans-select').value !== "0");
+                if (!isRevealed) return;
+                const corrAns = String(questionLockedState[qIdx] || document.getElementById('correct-ans-select').value || q.answer || 1);
+                const ansMap = questionAnswersMemory[qIdx] || {};
+                const feverMult = isFeverQuestion(qIdx) ? 2 : 1;
+
+                for (let s = 1; s <= classSize; s++) {
+                    const st = stats[s], chosen = ansMap[s];
+                    st.lastDelta = 0; st.lastTag = '';
+                    if (chosen && chosen === corrAns) {
+                        st.correct++; st.streak++;
+                        if (st.streak > st.maxStreak) st.maxStreak = st.streak;
+                        const streakBonus = st.streak >= 3 ? 300 : (st.streak === 2 ? 150 : 0);
+                        let pts = (1000 + streakBonus) * feverMult;
+                        let tag = feverMult > 1 ? '🔥雙倍氮氣' : (streakBonus > 0 ? '🔥連勝' : '');
+                        if (st.shieldCharged) {
+                            pts = Math.round(pts * 1.5);
+                            st.comebackCount++; st.comebackPoints += pts; st.shieldCharged = false;
+                            tag = feverMult > 1 ? '🚀彩虹超車!' : '⚡渦輪逆轉!';
+                        }
+                        st.arenaPoints += pts;
+                        if (qIdx === currentQIndex) { st.lastDelta = pts; st.lastTag = tag; }
+                    } else if (chosen) {
+                        st.wrong++; st.streak = 0; st.shieldCharged = true;
+                        if (qIdx === currentQIndex) { st.lastDelta = 0; st.lastTag = '⚡渦輪充能'; }
+                    } else {
+                        st.streak = 0; st.shieldCharged = true;
+                    }
+                }
+            });
+            return stats;
+        }
+
+        // =====================================================================
+        // 🏎️ 0.8 瑪利歐式「全班極速賽道」Canvas 60fps 動態渲染引擎
+        // =====================================================================
+        let carVisualX = {};      // 平滑動畫 X 座標 (0 ~ 1)
+        let carBoostUntil = {};   // 公布正解衝刺尾焰持續時間
+        let cachedArenaStats = {};
+        let roadDashOffset = 0;
+
+        const CAR_PALETTE = [
+            '#ef4444', '#3b82f6', '#10b981', '#f59e0b', '#8b5cf6',
+            '#ec4899', '#06b6d4', '#84cc16', '#f97316', '#6366f1'
+        ];
+
+        function triggerRaceCarsBoost() {
+            const now = Date.now();
+            const correctAns = document.getElementById('correct-ans-select').value;
+            for (let s = 1; s <= classSize; s++) {
+                if (studentAnswers[s] && studentAnswers[s] === correctAns) {
+                    carBoostUntil[s] = now + 2600;
+                }
+            }
+        }
+
+        function drawRaceTrackFrame() {
+            const canvas = document.getElementById('race-track-canvas');
+            if (canvas && document.getElementById('panel-tv').classList.contains('active') && !showTvSummaryModal) {
+                const ctx = canvas.getContext('2d');
+                const W = canvas.width, H = canvas.height;
+                const now = Date.now();
+                const correctAns = document.getElementById('correct-ans-select').value;
+                const mask = (tvMaskAnswersBeforeReveal && correctAns === "0");
+
+                // 1. 賽道背景與草皮邊界
+                ctx.fillStyle = '#14532d';
+                ctx.fillRect(0, 0, W, H);
+                const padTop = 18, padBot = 18;
+                const roadY = padTop, roadH = H - padTop - padBot;
+                ctx.fillStyle = '#1e293b';
+                ctx.fillRect(0, roadY, W, roadH);
+
+                // 紅白路緣石 (Curbs)
+                const curbW = 28;
+                for (let x = 0; x < W; x += curbW * 2) {
+                    ctx.fillStyle = '#ef4444';
+                    ctx.fillRect(x, 4, curbW, 14);
+                    ctx.fillRect(x, H - 18, curbW, 14);
+                    ctx.fillStyle = '#f8fafc';
+                    ctx.fillRect(x + curbW, 4, curbW, 14);
+                    ctx.fillRect(x + curbW, H - 18, curbW, 14);
+                }
+
+                // 2. 起跑線與終點黑白方格旗
+                const startX = 95, finishX = W - 85;
+                ctx.fillStyle = 'rgba(255,255,255,0.22)';
+                ctx.fillRect(startX, roadY, 6, roadH);
+
+                // 終點黑白格線
+                const chkSize = 14;
+                for (let y = roadY; y < roadY + roadH; y += chkSize) {
+                    const isEven = Math.floor((y - roadY) / chkSize) % 2 === 0;
+                    ctx.fillStyle = isEven ? '#ffffff' : '#0f172a';
+                    ctx.fillRect(finishX, y, chkSize, Math.min(chkSize, roadY + roadH - y));
+                    ctx.fillStyle = isEven ? '#0f172a' : '#ffffff';
+                    ctx.fillRect(finishX + chkSize, y, chkSize, Math.min(chkSize, roadY + roadH - y));
+                }
+
+                // 3. 動態流動車道虛線 (分成 8 條主視覺跑道)
+                const laneCount = 8;
+                const laneH = roadH / laneCount;
+                roadDashOffset = (roadDashOffset - 1.2) % 48;
+                ctx.save();
+                ctx.strokeStyle = 'rgba(148, 163, 184, 0.25)';
+                ctx.lineWidth = 2;
+                ctx.setLineDash([24, 24]);
+                ctx.lineDashOffset = roadDashOffset;
+                for (let l = 1; l < laneCount; l++) {
+                    const ly = roadY + l * laneH;
+                    ctx.beginPath(); ctx.moveTo(startX, ly); ctx.lineTo(finishX, ly); ctx.stroke();
+                }
+                ctx.restore();
+
+                // 計算目標里程上限 (讓車隊始終分佈在起點與終點之間，極具追逐感)
+                const totalQ = Math.max(5, (params.tasks || []).length);
+                let maxPts = 0;
+                for (let s = 1; s <= classSize; s++) {
+                    const pts = (cachedArenaStats[s] && cachedArenaStats[s].arenaPoints) || 0;
+                    if (pts > maxPts) maxPts = pts;
+                }
+                const targetMaxPts = Math.max(totalQ * 1000, maxPts + 1200);
+
+                // 4. 繪製全班每台座號賽車
+                for (let s = 1; s <= classSize; s++) {
+                    const st = cachedArenaStats[s] || { arenaPoints: 0, streak: 0, shieldCharged: false, lastDelta: 0, lastTag: '' };
+                    const ans = studentAnswers[s];
+                    const isReady = !!ans;
+                    const isCorr = (ans && correctAns !== "0" && ans === correctAns);
+                    const isBoosting = (carBoostUntil[s] && now < carBoostUntil[s]);
+
+                    // 計算垂直分佈 (均勻分布在柏油路高度內)
+                    const rowRatio = (s - 0.5) / classSize;
+                    // 微幅錯開同分車的 X 位置，避免完全重疊
+                    const staggerX = ((s % 4) - 1.5) * 14;
+                    const progress = Math.min(0.96, st.arenaPoints / targetMaxPts);
+                    const targetX = startX + 18 + staggerX + progress * (finishX - startX - 75);
+
+                    if (typeof carVisualX[s] !== 'number') carVisualX[s] = targetX;
+                    else carVisualX[s] += (targetX - carVisualX[s]) * 0.085;
+
+                    let cx = carVisualX[s];
+                    let cy = roadY + 16 + rowRatio * (roadH - 32);
+
+                    // 若本題已舉牌就緒 (未開牌)，原地引擎點火微震動！
+                    if (isReady && correctAns === "0") {
+                        cx += Math.sin(now * 0.04 + s) * 2.2;
+                        cy += Math.cos(now * 0.05 + s) * 1.2;
+                    }
+
+                    ctx.save();
+                    ctx.translate(cx, cy);
+
+                    // A. 若具備「⚡ 黃金橡皮筋渦輪護盾 (1.5x)」，繪製金色閃電能量光環
+                    if (st.shieldCharged) {
+                        ctx.save();
+                        ctx.strokeStyle = '#facc15';
+                        ctx.fillStyle = 'rgba(250, 204, 21, 0.16)';
+                        ctx.lineWidth = 2.5;
+                        ctx.beginPath();
+                        ctx.ellipse(0, 0, 34, 15, 0, 0, Math.PI * 2);
+                        ctx.fill();
+                        ctx.stroke();
+                        ctx.restore();
+                    }
+
+                    // B. 繪製車尾噴射火焰 (已掃到蓄力紫火 vs 衝刺氮氣彩虹火)
+                    if (isBoosting) {
+                        const flameLen = 28 + Math.random() * 22;
+                        const grad = ctx.createLinearGradient(-22, 0, -22 - flameLen, 0);
+                        grad.addColorStop(0, '#fff200');
+                        grad.addColorStop(0.5, '#ff7675');
+                        grad.addColorStop(1, 'rgba(108, 92, 231, 0)');
+                        ctx.fillStyle = grad;
+                        ctx.beginPath();
+                        ctx.moveTo(-20, -7);
+                        ctx.lineTo(-22 - flameLen, 0);
+                        ctx.lineTo(-20, 7);
+                        ctx.closePath();
+                        ctx.fill();
+                    } else if (isReady && correctAns === "0") {
+                        const idleLen = 12 + Math.sin(now * 0.03 + s) * 6;
+                        ctx.fillStyle = '#38bdf8';
+                        ctx.beginPath();
+                        ctx.moveTo(-20, -5);
+                        ctx.lineTo(-22 - idleLen, 0);
+                        ctx.lineTo(-20, 5);
+                        ctx.closePath();
+                        ctx.fill();
+                    }
+
+                    // C. 繪製流線型賽車車體與輪胎
+                    const carColor = CAR_PALETTE[(s - 1) % CAR_PALETTE.length];
+                    ctx.fillStyle = '#0f172a';
+                    ctx.fillRect(-16, -11, 10, 4);
+                    ctx.fillRect(8, -11, 10, 4);
+                    ctx.fillRect(-16, 7, 10, 4);
+                    ctx.fillRect(8, 7, 10, 4);
+
+                    // 車身底盤
+                    ctx.fillStyle = isReady ? carColor : '#475569';
+                    ctx.strokeStyle = isCorr ? '#fff200' : (isReady ? '#ffffff' : '#94a3b8');
+                    ctx.lineWidth = isCorr ? 3 : 1.8;
+                    ctx.beginPath();
+                    ctx.roundRect(-22, -8, 46, 16, 6);
+                    ctx.fill();
+                    ctx.stroke();
+
+                    // 駕駛座艙罩
+                    ctx.fillStyle = '#0f172a';
+                    ctx.beginPath();
+                    ctx.roundRect(-6, -5, 16, 10, 4);
+                    ctx.fill();
+
+                    // 車身座號標示 (#01 ~ #28)
+                    ctx.fillStyle = '#ffffff';
+                    ctx.font = '900 12px "Segoe UI", sans-serif';
+                    ctx.textAlign = 'center';
+                    ctx.textBaseline = 'middle';
+                    ctx.fillText(`#${s}`, 2, 0.5);
+
+                    // D. 車頭右方狀態徽章 (已就緒閃電 / 所選答案 / 衝刺加分浮字)
+                    ctx.textAlign = 'left';
+                    if (correctAns !== "0") {
+                        if (isCorr) {
+                            ctx.font = '900 13px "Microsoft JhengHei", sans-serif';
+                            ctx.fillStyle = '#fff200';
+                            ctx.fillText(`🏁+${st.lastDelta}`, 28, 0);
+                        } else if (st.shieldCharged) {
+                            ctx.font = 'bold 11px "Microsoft JhengHei", sans-serif';
+                            ctx.fillStyle = '#38bdf8';
+                            ctx.fillText(`⚡下題1.5x`, 28, 0);
+                        }
+                    } else if (isReady) {
+                        ctx.font = '900 12px "Microsoft JhengHei", sans-serif';
+                        ctx.fillStyle = mask ? '#55efc4' : '#fff200';
+                        ctx.fillText(mask ? '🔥就緒' : `選${formatOptionLabel(ans)}`, 28, 0);
+                    } else if (st.shieldCharged) {
+                        ctx.font = 'bold 11px "Microsoft JhengHei", sans-serif';
+                        ctx.fillStyle = '#fde047';
+                        ctx.fillText('⚡1.5x渦輪', 28, 0);
+                    }
+
+                    ctx.restore();
+                }
+            }
+            requestAnimationFrame(drawRaceTrackFrame);
+        }
+
+        const READY_MOTTOS = ['🔥引擎點火', '🚀渦輪待命', '⚡雷達鎖定', '🏎️排檔就緒', '🌟氮氣充能'];
+        function spawnTvScanFloatingBubbles(newSeats) {
+            const layer = document.getElementById('tv-scan-float-layer');
+            if (!layer || !newSeats || !newSeats.length) return;
+            newSeats.slice(0, 6).forEach((seat, idx) => {
+                justScannedSeats[seat] = Date.now();
+                const b = document.createElement('div');
+                b.className = 'scan-fly-bubble';
+                b.style.left = Math.min(84, Math.max(8, ((seat * 17 + idx * 23) % 76) + 8)) + '%';
+                b.innerHTML = `🏎️ <b>#${seat}號賽車</b> ${READY_MOTTOS[(seat + idx) % READY_MOTTOS.length]}！`;
+                layer.appendChild(b);
+                setTimeout(() => { if (b.parentNode) b.parentNode.removeChild(b); }, 1450);
+            });
+        }
+
+        function initClassBuilderUI() {
+            const grades = ["一年", "二年", "三年", "四年", "五年", "六年", "七年", "八年", "九年", "高一", "高二", "高三"];
+            document.getElementById('grade-chips-wrap').innerHTML = grades.map(g =>
+                `<button type="button" class="chip-btn ${g === selectedBuilderGrade ? 'selected' : ''}" onclick="selectBuilderGrade('${g}', this)">${g}</button>`
+            ).join('');
+            const suffixes = ["一班", "二班", "三班", "四班", "五班", "六班", "七班", "八班", "1班", "2班", "3班", "4班", "5班", "6班", "甲班", "乙班", "丙班", "丁班", "忠班", "孝班", "仁班", "愛班"];
+            document.getElementById('class-suffix-wrap').innerHTML = suffixes.map(s =>
+                `<button type="button" class="chip-btn" onclick="addCombinedClass('${s}')">➕ ${s}</button>`
+            ).join('');
+            renderConfiguredClasses();
+        }
+        function selectBuilderGrade(g, btn) {
+            selectedBuilderGrade = g;
+            document.querySelectorAll('#grade-chips-wrap .chip-btn').forEach(b => b.classList.remove('selected'));
+            if (btn) btn.classList.add('selected');
+        }
+        function addCombinedClass(suffix) {
+            if (!Array.isArray(params.classes)) params.classes = [];
+            const fullName = `${selectedBuilderGrade}${suffix}`;
+            if (!params.classes.includes(fullName)) { params.classes.push(fullName); renderConfiguredClasses(); syncClassSelectDropdown(); showToast(`🏫 已加入「${fullName}」！`); }
+        }
+        function addCustomClassesFromInput() {
+            const input = document.getElementById('custom-class-input'), raw = input.value.trim(); if (!raw) return;
+            if (!Array.isArray(params.classes)) params.classes = [];
+            raw.split(/[,，、\s]+/).forEach(c => { if (c && !params.classes.includes(c)) params.classes.push(c); });
+            input.value = ''; renderConfiguredClasses(); syncClassSelectDropdown();
+        }
+        function removeConfiguredClass(idx) {
+            if (!Array.isArray(params.classes) || params.classes.length <= 1) { showToast('⚠️ 至少需保留 1 個班級！'); return; }
+            params.classes.splice(idx, 1); renderConfiguredClasses(); syncClassSelectDropdown();
+        }
+        function renderConfiguredClasses() {
+            if (!Array.isArray(params.classes) || !params.classes.length) params.classes = ["五年一班", "五年二班"];
+            const box = document.getElementById('configured-classes-list'); if (!box) return;
+            box.innerHTML = params.classes.map((c, idx) => `<span class="class-tag-pill">${escapeHtml(c)} <span class="del" onclick="removeConfiguredClass(${idx})">×</span></span>`).join('');
+        }
+        function syncClassSelectDropdown() {
+            const list = (Array.isArray(params.classes) && params.classes.length) ? params.classes : ["五年一班"];
+            ['active-class-select', 'tv-class-select'].forEach(id => {
+                const sel = document.getElementById(id); if (!sel) return;
+                const prev = sel.value;
+                sel.innerHTML = list.map(c => `<option value="${escapeHtml(c)}">${escapeHtml(c)}</option>`).join('');
+                if (list.includes(prev)) sel.value = prev;
+            });
+            detectNextQuizNumberForClass(getActiveClassName());
+        }
+        function getActiveClassName() {
+            const tvSel = document.getElementById('tv-class-select'), mbSel = document.getElementById('active-class-select');
+            return (tvSel && tvSel.value) || (mbSel && mbSel.value) || "五年一班";
+        }
+        function getActiveQuizNo() { return currentQuizNoStr || "測驗一"; }
+        async function onClassChange(newClassVal) {
+            const tvSel = document.getElementById('tv-class-select'), mbSel = document.getElementById('active-class-select');
+            if (tvSel) tvSel.value = newClassVal; if (mbSel) mbSel.value = newClassVal;
+            await detectNextQuizNumberForClass(newClassVal);
+            if (document.getElementById('panel-tv').classList.contains('active')) pushTvMailboxToCloud(); else pushMobileMailboxToCloud();
+        }
+
+        const CN_NUMS = ["一", "二", "三", "四", "五", "六", "七", "八", "九", "十", "十一", "十二", "十三", "十四", "十五", "十六", "十七", "十八", "十九", "二十"];
+        let quizNoRequestSeq = 0;
+        async function detectNextQuizNumberForClass(className) {
+            const mySeq = ++quizNoRequestSeq;
+            const code = (document.getElementById('challenge-code').value.trim() || "00000").padStart(5, '0');
+            let next = "測驗一";
+            try {
+                const res = await fetch(`${getGasUrl()}?action=getQuizSessions&roomCode=${encodeURIComponent(code)}`);
+                const data = await res.json();
+                if (data && data.status === 'success' && Array.isArray(data.sessions)) {
+                    const used = new Set(data.sessions.filter(s => s.className === className && s.quizNo).map(s => s.quizNo));
+                    next = `測驗${CN_NUMS[used.size] || (used.size + 1)}`;
+                }
+            } catch (e) {}
+            if (mySeq !== quizNoRequestSeq) return;
+            currentQuizNoStr = next;
+            updateQuizBadgesUI();
+        }
+        function updateQuizBadgesUI() {
+            const b1 = document.getElementById('tv-auto-quiz-badge'), b2 = document.getElementById('mobile-auto-quiz-badge');
+            if (b1) b1.textContent = `📝 ${currentQuizNoStr}`;
+            if (b2) b2.textContent = `📝 本場次：${currentQuizNoStr}`;
+        }
+
+        let tvPollTimer = null, mobilePollTimer = null, tvKnowsMobileConnected = false;
+        async function generateNewTvPairCode() {
+            activePairCode = String(Math.floor(1000 + Math.random() * 9000));
+            tvKnowsMobileConnected = false; tvSeqCounter = 1; lastSeenMobSeq = -1;
+            document.getElementById('tv-pair-display').textContent = activePairCode;
+            updateSyncStatusLightsUI();
+            await pushTvMailboxToCloud(true);
+            startTvPolling();
+        }
+
+        function updateSyncStatusLightsUI() {
+            const tvPill = document.getElementById('tv-connection-pill'), mobHud = document.getElementById('mobile-sync-hud-bar');
+            const qNum = currentQIndex + 1;
+            if (tvPill) {
+                if (!tvKnowsMobileConnected) { tvPill.className = 'sync-status-pill waiting'; tvPill.innerHTML = `🔴 待連(${activePairCode})`; }
+                else if (hasQuestionMismatch) { tvPill.className = 'sync-status-pill mismatch'; tvPill.innerHTML = `🟡 題號確認中`; }
+                else { tvPill.className = 'sync-status-pill connected'; tvPill.innerHTML = `🟢 同步中(第${qNum}題)`; }
+            }
+            if (mobHud) {
+                if (Date.now() < allowOpticalPairUntil) { mobHud.className = 'mobile-sync-hud-bar pairing'; mobHud.innerHTML = `📷 請對準大電視上的「⚡光學配對盾牌碼」...`; }
+                else if (hasQuestionMismatch) { mobHud.className = 'mobile-sync-hud-bar warning'; mobHud.innerHTML = `🔴 題號不同步！請先點擊上方按鈕同步題號`; }
+                else if (isMobilePaired) { mobHud.className = 'mobile-sync-hud-bar ready'; mobHud.innerHTML = `🟢 雙機同步中（第 ${qNum} 題｜配對碼 ${activePairCode}），可以掃描！`; }
+                else if (isStandaloneQuizMode) { mobHud.className = 'mobile-sync-hud-bar ready'; mobHud.innerHTML = `📱 單機施測模式就緒（第 ${qNum} 題），可以掃描！`; }
+                else { mobHud.className = 'mobile-sync-hud-bar offline'; mobHud.innerHTML = `⚪ 離線圖卡測試模式（請先於上方輸入 4 位配對碼連線）`; }
+            }
+        }
+
+        function enableOpticalPairingWindow() {
+            allowOpticalPairUntil = Date.now() + 20000;
+            opticalPairConfirm = { code: "", count: 0 };
+            updateSyncStatusLightsUI();
+            showToast('📷 已開啟鏡頭掃碼配對！請對準大電視上的光學配對碼！');
+            if (!scanning) startCamera();
+        }
+
+        function openTvQrPairModal() {
+            if (!activePairCode) generateNewTvPairCode();
+            document.getElementById('qr-modal-pair-code').textContent = activePairCode;
+            document.getElementById('tv-qr-img').src = `https://api.qrserver.com/v1/create-qr-code/?size=220x220&margin=8&data=${encodeURIComponent(getSiteUrl())}`;
+            drawOpticalPairShield(document.getElementById('tv-optical-pair-canvas'), activePairCode);
+            document.getElementById('tv-qr-pair-modal').style.display = 'flex';
+        }
+
+        function drawOpticalPairShield(canvas, pairStr) {
+            if (!canvas) return;
+            const ctx = canvas.getContext('2d'), size = canvas.width;
+            ctx.fillStyle = '#ffffff'; ctx.fillRect(0, 0, size, size);
+            const code = encodePairCodeTo16Bits(pairStr);
+            const margin = Math.round(size * 0.15), boxSize = size - margin * 2, cell = boxSize / 6;
+            ctx.fillStyle = '#d63031'; ctx.font = `900 ${Math.round(size * 0.055)}px sans-serif`; ctx.textAlign = 'center'; ctx.textBaseline = 'middle';
+            ctx.fillText(`⚡配對碼 ${pairStr}`, size / 2, margin * 0.45);
+            ctx.fillText(`手機鏡頭照此秒連`, size / 2, size - margin * 0.45);
+            ctx.fillStyle = '#000000'; ctx.beginPath(); ctx.roundRect(margin, margin, boxSize, boxSize, cell * 0.75); ctx.fill();
+            const innerX = margin + cell, innerY = margin + cell, innerSize = cell * 4;
+            ctx.fillStyle = '#ffffff'; ctx.beginPath(); ctx.roundRect(innerX, innerY, innerSize, innerSize, cell * 0.25); ctx.fill();
+            ctx.fillStyle = '#000000';
+            for (let r = 0; r < 4; r++) {
+                for (let c = 0; c < 4; c++) {
+                    if (((code >> (15 - (r * 4 + c))) & 1) === 1) {
+                        ctx.beginPath(); ctx.arc(innerX + (c + 0.5) * cell, innerY + (r + 0.5) * cell, cell * 0.46, 0, Math.PI * 2); ctx.fill();
+                    }
+                }
+            }
+        }
+
+        async function pushTvMailboxToCloud(isInit = false) {
+            if (!activePairCode) return;
+            tvSeqCounter++;
+            const code = (document.getElementById('tv-code-input').value.trim() || "00000").padStart(5, '0');
+            const tvPayload = {
+                roomCode: code, pairCode: activePairCode, tvSeq: tvSeqCounter, qIndex: currentQIndex,
+                revealedAns: document.getElementById('correct-ans-select').value || "0",
+                tvMask: tvMaskAnswersBeforeReveal, showExp: showExplanationOnReveal, showSummary: showTvSummaryModal,
+                feverMap: manualFeverOverrides, className: getActiveClassName(), quizNo: getActiveQuizNo(),
+                classSize: classSize, useNumeric: useNumericLabels, lockedState: questionLockedState,
+                allMemory: questionAnswersMemory, mobileConnected: isInit ? false : tvKnowsMobileConnected, updatedAt: Date.now()
+            };
+            try {
+                await fetch(getGasUrl(), {
+                    method: 'POST', headers: { 'Content-Type': 'text/plain;charset=utf-8' },
+                    body: JSON.stringify({ action: isInit ? "initTvSession" : "syncLiveState", senderRole: "TV", roomCode: "T" + activePairCode, pairCode: activePairCode, live: tvPayload })
+                });
+            } catch (e) {}
+            updateSyncStatusLightsUI();
+        }
+
+        let mobPushTimer = null;
+        function pushMobileMailboxToCloud(immediate = false) {
+            if (!activePairCode || !isMobilePaired || hasQuestionMismatch) return;
+            clearTimeout(mobPushTimer);
+            const execPush = async () => {
+                mobSeqCounter++;
+                const code = (document.getElementById('challenge-code').value.trim() || "00000").padStart(5, '0');
+                const mobPayload = {
+                    roomCode: code, pairCode: activePairCode, mobSeq: mobSeqCounter, qIndex: currentQIndex,
+                    revealedAns: document.getElementById('correct-ans-select').value || "0",
+                    tvMask: tvMaskAnswersBeforeReveal, showExp: showExplanationOnReveal, showSummary: showTvSummaryModal,
+                    feverMap: manualFeverOverrides, className: getActiveClassName(), quizNo: getActiveQuizNo(),
+                    classSize: classSize, useNumeric: useNumericLabels, answers: studentAnswers,
+                    allMemory: questionAnswersMemory, lockedState: questionLockedState, mobileConnected: true, updatedAt: Date.now()
+                };
+                try {
+                    await fetch(getGasUrl(), {
+                        method: 'POST', headers: { 'Content-Type': 'text/plain;charset=utf-8' },
+                        body: JSON.stringify({ action: "syncLiveState", senderRole: "MOBILE", roomCode: "M" + activePairCode, live: mobPayload })
+                    });
+                } catch (e) {}
+                updateSyncStatusLightsUI();
+            };
+            if (immediate) execPush(); else mobPushTimer = setTimeout(execPush, 70);
+        }
+
+        async function connectMobileToTv(autoCode) {
+            const inputEl = document.getElementById('mobile-pair-input');
+            if (autoCode) inputEl.value = String(autoCode).trim();
+            const inputCode = inputEl.value.trim();
+            if (inputCode.length !== 4) { alert('⚠️ 請輸入大電視右下角顯示的「4 位數配對碼」！'); return; }
+            const btn = document.getElementById('btn-connect-tv');
+            btn.disabled = true; btn.textContent = '⏳ 配對中...';
+            try {
+                const res = await fetch(`${getGasUrl()}?action=getLiveState&roomCode=${encodeURIComponent("T" + inputCode)}&pairCode=${encodeURIComponent(inputCode)}&_t=${Date.now()}`);
+                const data = await res.json();
+                if (data && data.status === 'success' && data.live) {
+                    activePairCode = inputCode; inputEl.value = activePairCode;
+                    isMobilePaired = true; isStandaloneQuizMode = false; allowOpticalPairUntil = 0; hasQuestionMismatch = false;
+                    document.getElementById('mobile-q-mismatch-banner').style.display = 'none';
+                    const tvLive = data.live; lastSeenTvSeq = tvLive.tvSeq || 0;
+                    if (tvLive.roomCode) {
+                        document.getElementById('challenge-code').value = tvLive.roomCode;
+                        document.getElementById('tv-code-input').value = tvLive.roomCode;
+                        await loadCloudQuiz(true);
+                    }
+                    applyTvStateToMobile(tvLive, true);
+                    unlockMobileQuizUI(`🟢 已成功綁定極速賽道大電視（配對碼：${activePairCode}）！`);
+                    pushMobileMailboxToCloud(true);
+                    startMobilePolling();
+                    playDingDong();
+                    showToast(`🎉 配對成功！已穩定鎖定大電視 [${activePairCode}]！`);
+                } else if (!autoCode) alert(`❌ 找不到配對碼 [${inputCode}]！請確認電腦已開啟大電視看板。`);
+            } catch (e) { if (!autoCode) alert('❌ 連線異常，請檢查網路狀態！'); }
+            finally { btn.disabled = false; btn.textContent = '🔗 連線大電視'; }
+        }
+
+        function enableStandaloneMobileQuiz() {
+            isStandaloneQuizMode = true; isMobilePaired = false; activePairCode = ""; allowOpticalPairUntil = 0; hasQuestionMismatch = false;
+            document.getElementById('mobile-q-mismatch-banner').style.display = 'none';
+            stopMobilePolling();
+            unlockMobileQuizUI('📱 目前為【單機施測模式】（可直接在手機上看題、掃描與上傳成績）');
+            updateSyncStatusLightsUI();
+            showToast('📱 已開啟手機單機施測模式！');
+        }
+
+        function unlockMobileQuizUI(statusTitle) {
+            const banner = document.getElementById('mobile-pair-banner');
+            banner.classList.add('connected');
+            document.getElementById('mobile-pair-title').style.color = '#155724';
+            document.getElementById('mobile-pair-title').textContent = statusTitle;
+            document.getElementById('mobile-pair-desc').textContent = '💡 已鎖定此配對頻道！若需更換配對碼請直接輸入新號碼。';
+            document.getElementById('mobile-active-quiz-zone').style.display = 'block';
+            updateSyncStatusLightsUI();
+        }
+
+        function startTvPolling() {
+            stopTvPolling();
+            tvPollTimer = setInterval(async () => {
+                const tvPanel = document.getElementById('panel-tv');
+                if (!tvPanel || !tvPanel.classList.contains('active') || !activePairCode) return;
+                try {
+                    const res = await fetch(`${getGasUrl()}?action=getLiveState&roomCode=${encodeURIComponent("M" + activePairCode)}&_t=${Date.now()}`);
+                    const data = await res.json();
+                    if (data && data.status === 'success' && data.live) {
+                        const mbLive = data.live;
+                        if (!tvKnowsMobileConnected) {
+                            tvKnowsMobileConnected = true;
+                            document.getElementById('tv-qr-pair-modal').style.display = 'none';
+                            playDingDong();
+                            showToast(`🟢 手機遙控器已連線（配對碼 ${activePairCode}）！`);
+                            updateSyncStatusLightsUI();
+                        }
+                        if (typeof mbLive.mobSeq === 'number' && mbLive.mobSeq > lastSeenMobSeq) {
+                            lastSeenMobSeq = mbLive.mobSeq;
+                            applyMobileStateToTv(mbLive);
+                        }
+                    }
+                } catch (e) {}
+            }, 650);
+        }
+        function stopTvPolling() { if (tvPollTimer) { clearInterval(tvPollTimer); tvPollTimer = null; } }
+
+        function startMobilePolling() {
+            stopMobilePolling();
+            mobilePollTimer = setInterval(async () => {
+                const scanPanel = document.getElementById('panel-scan');
+                if (!scanPanel || !scanPanel.classList.contains('active') || !isMobilePaired || !activePairCode) return;
+                try {
+                    const res = await fetch(`${getGasUrl()}?action=getLiveState&roomCode=${encodeURIComponent("T" + activePairCode)}&_t=${Date.now()}`);
+                    const data = await res.json();
+                    if (data && data.status === 'success' && data.live) {
+                        const tvLive = data.live;
+                        if (typeof tvLive.tvSeq === 'number' && tvLive.tvSeq > lastSeenTvSeq) {
+                            lastSeenTvSeq = tvLive.tvSeq;
+                            if (typeof tvLive.qIndex === 'number' && tvLive.qIndex !== currentQIndex) {
+                                remoteTvQIndex = tvLive.qIndex; hasQuestionMismatch = true;
+                                document.getElementById('mismatch-tv-q').textContent = `第 ${tvLive.qIndex + 1} 題`;
+                                document.getElementById('mismatch-mob-q').textContent = `第 ${currentQIndex + 1} 題`;
+                                document.getElementById('mobile-q-mismatch-banner').style.display = 'flex';
+                                playDingDong(); updateSyncStatusLightsUI();
+                            } else applyTvStateToMobile(tvLive, false);
+                        }
+                    }
+                } catch (e) {}
+            }, 650);
+        }
+        function stopMobilePolling() { if (mobilePollTimer) { clearInterval(mobilePollTimer); mobilePollTimer = null; } }
+
+        function resolveQuestionMismatch(strategy) {
+            hasQuestionMismatch = false;
+            document.getElementById('mobile-q-mismatch-banner').style.display = 'none';
+            if (strategy === 'FOLLOW_TV') { currentQIndex = remoteTvQIndex; renderCurrentQuestion(); pushMobileMailboxToCloud(true); }
+            else { pushTvMailboxToCloud(false); pushMobileMailboxToCloud(true); }
+            updateSyncStatusLightsUI();
+        }
+
+        function applyMobileStateToTv(mbLive) {
+            if (mbLive.classSize && mbLive.classSize !== classSize) updateClassSize(mbLive.classSize, true);
+            if (typeof mbLive.tvMask === 'boolean') { tvMaskAnswersBeforeReveal = mbLive.tvMask; updateMaskButtonsUI(); }
+            if (typeof mbLive.showExp === 'boolean') { showExplanationOnReveal = mbLive.showExp; updateExplanationButtonsUI(); }
+            if (mbLive.feverMap) manualFeverOverrides = mbLive.feverMap;
+            if (typeof mbLive.showSummary === 'boolean' && mbLive.showSummary !== showTvSummaryModal) toggleTvSummaryView(mbLive.showSummary, true);
+            if (typeof mbLive.useNumeric === 'boolean') useNumericLabels = mbLive.useNumeric;
+            if (mbLive.className) {
+                ['active-class-select', 'tv-class-select'].forEach(id => {
+                    const sel = document.getElementById(id);
+                    if (sel) {
+                        if (!Array.from(sel.options).some(o => o.value === mbLive.className)) {
+                            const o = document.createElement('option'); o.value = mbLive.className; o.textContent = mbLive.className; sel.appendChild(o);
+                        }
+                        sel.value = mbLive.className;
+                    }
+                });
+            }
+            if (mbLive.quizNo) { currentQuizNoStr = mbLive.quizNo; updateQuizBadgesUI(); }
+            if (mbLive.allMemory) questionAnswersMemory = mbLive.allMemory;
+            if (mbLive.lockedState) questionLockedState = mbLive.lockedState;
+
+            const tasks = params.tasks || [];
+            if (typeof mbLive.qIndex === 'number' && mbLive.qIndex >= 0 && mbLive.qIndex < tasks.length && mbLive.qIndex !== currentQIndex) {
+                currentQIndex = mbLive.qIndex;
+                document.getElementById('q-title-display').textContent = `第 ${currentQIndex + 1} / ${tasks.length} 題：${tasks[currentQIndex].task}`;
+            }
+
+            const incomingAns = mbLive.answers || {}, newlyScanned = [];
+            for (let s in incomingAns) { if (studentAnswers[s] !== incomingAns[s]) newlyScanned.push(Number(s)); }
+            studentAnswers = incomingAns;
+            questionAnswersMemory[currentQIndex] = Object.assign({}, studentAnswers);
+            if (newlyScanned.length > 0) { playDingDong(); spawnTvScanFloatingBubbles(newlyScanned); }
+
+            const prevRev = document.getElementById('correct-ans-select').value, nextRev = mbLive.revealedAns || "0";
+            document.getElementById('correct-ans-select').value = nextRev;
+            if (prevRev === "0" && nextRev !== "0") { playRevealFanfare(); triggerRaceCarsBoost(); }
+            updateScoreBoard(true); updateSyncStatusLightsUI();
+        }
+
+        function applyTvStateToMobile(tvLive, syncQIndex = false) {
+            if (tvLive.classSize && tvLive.classSize !== classSize) updateClassSize(tvLive.classSize, true);
+            if (typeof tvLive.tvMask === 'boolean') { tvMaskAnswersBeforeReveal = tvLive.tvMask; updateMaskButtonsUI(); }
+            if (typeof tvLive.showExp === 'boolean') { showExplanationOnReveal = tvLive.showExp; updateExplanationButtonsUI(); }
+            if (tvLive.feverMap) manualFeverOverrides = tvLive.feverMap;
+            if (typeof tvLive.showSummary === 'boolean') showTvSummaryModal = tvLive.showSummary;
+            if (typeof tvLive.useNumeric === 'boolean') useNumericLabels = tvLive.useNumeric;
+            if (tvLive.className) {
+                ['active-class-select', 'tv-class-select'].forEach(id => {
+                    const sel = document.getElementById(id);
+                    if (sel) {
+                        if (!Array.from(sel.options).some(o => o.value === tvLive.className)) {
+                            const o = document.createElement('option'); o.value = tvLive.className; o.textContent = tvLive.className; sel.appendChild(o);
+                        }
+                        sel.value = tvLive.className;
+                    }
+                });
+            }
+            if (tvLive.quizNo) { currentQuizNoStr = tvLive.quizNo; updateQuizBadgesUI(); }
+            if (tvLive.lockedState) questionLockedState = tvLive.lockedState;
+            if (tvLive.allMemory) questionAnswersMemory = tvLive.allMemory;
+
+            const tasks = params.tasks || [];
+            if (syncQIndex && typeof tvLive.qIndex === 'number' && tvLive.qIndex >= 0 && tvLive.qIndex < tasks.length) {
+                currentQIndex = tvLive.qIndex;
+                studentAnswers = Object.assign({}, questionAnswersMemory[currentQIndex] || {});
+                document.getElementById('q-title-display').textContent = `第 ${currentQIndex + 1} / ${tasks.length} 題：${tasks[currentQIndex].task}`;
+            }
+            document.getElementById('correct-ans-select').value = tvLive.revealedAns || (questionLockedState[currentQIndex] ? String(questionLockedState[currentQIndex]) : "0");
+            updateScoreBoard(true); updateSyncStatusLightsUI();
+        }
+
+        function toggleTvMaskMode() { tvMaskAnswersBeforeReveal = !tvMaskAnswersBeforeReveal; updateMaskButtonsUI(); updateScoreBoard(); }
+        function updateMaskButtonsUI() {
+            document.getElementById('btn-tv-mask-toggle').textContent = tvMaskAnswersBeforeReveal ? '🙈 蓋牌：開啟' : '👁️ 蓋牌：關閉';
+            document.getElementById('tv-mask-btn-text').textContent = tvMaskAnswersBeforeReveal ? '🙈 蓋牌:開' : '👁️ 蓋牌:關';
+        }
+        function toggleExplanationMode() { showExplanationOnReveal = !showExplanationOnReveal; updateExplanationButtonsUI(); updateScoreBoard(); }
+        function updateExplanationButtonsUI() {
+            document.getElementById('tv-exp-btn-text').textContent = showExplanationOnReveal ? '📖 解說:開' : '📖 解說:關';
+            document.getElementById('btn-mob-exp-toggle').textContent = showExplanationOnReveal ? '📖 解說：開啟' : '📖 解說：關閉';
+        }
+        function setSummaryDisplayMode(mode) { summaryDisplayMode = mode; renderTvSummaryMatrix(); }
+        function toggleTvSummaryView(forceState, skipPush = false) {
+            showTvSummaryModal = (typeof forceState === 'boolean') ? forceState : !showTvSummaryModal;
+            const sumView = document.getElementById('tv-summary-view'), quizView = document.getElementById('tv-quiz-view'), btnTxt = document.getElementById('tv-summary-btn-text');
+            if (showTvSummaryModal) {
+                renderTvSummaryMatrix();
+                if (sumView) sumView.style.display = 'flex'; if (quizView) quizView.style.display = 'none'; if (btnTxt) btnTxt.textContent = '🏆 總表:開';
+            } else {
+                if (sumView) sumView.style.display = 'none'; if (quizView) quizView.style.display = 'flex'; if (btnTxt) btnTxt.textContent = '🏆 總表';
+            }
+            if (!skipPush) { if (document.getElementById('panel-tv').classList.contains('active')) pushTvMailboxToCloud(); else pushMobileMailboxToCloud(true); }
+        }
+
+        function renderTvSummaryMatrix() {
+            const matrix = document.getElementById('tv-summary-matrix'), awardsBanner = document.getElementById('tv-awards-banner');
+            if (!matrix) return;
+            updateRecordedQuestionCounter();
+            const qKeys = Object.keys(questionAnswersMemory).filter(k => Object.keys(questionAnswersMemory[k] || {}).length > 0);
+            const testedCount = qKeys.length, arenaStats = computeArenaStandings();
+            let topArena = null, topComeback = null, topStreak = null, maxScore100 = 0;
+
+            for (let s = 1; s <= classSize; s++) {
+                const st = arenaStats[s];
+                st.score100 = testedCount > 0 ? Math.round((st.correct / testedCount) * 100) : 0;
+                if (st.score100 > maxScore100) maxScore100 = st.score100;
+                if (!topArena || st.arenaPoints > topArena.arenaPoints) topArena = st;
+                if (!topComeback || st.comebackPoints > topComeback.comebackPoints) topComeback = st;
+                if (!topStreak || st.maxStreak > topStreak.maxStreak) topStreak = st;
+            }
+
+            if (awardsBanner) {
+                awardsBanner.innerHTML = `
+                    <div class="award-card"><span style="font-size:26px;">👑</span><div><div style="font-size:12px;font-weight:900;color:#b45309;">極速車神王 (最高里程)</div><div style="font-size:16px;font-weight:900;color:#78350f;">${topArena && topArena.arenaPoints > 0 ? `#${topArena.seat}號 (${topArena.arenaPoints}m)` : '尚無紀錄'}</div></div></div>
+                    <div class="award-card" style="background:linear-gradient(135deg,#eff6ff,#dbeafe);border-color:#3b82f6;"><span style="font-size:26px;">🚀</span><div><div style="font-size:12px;font-weight:900;color:#1d4ed8;">渦輪超車王 (逆轉最多)</div><div style="font-size:16px;font-weight:900;color:#1e3a8a;">${topComeback && topComeback.comebackCount > 0 ? `#${topComeback.seat}號 (超車${topComeback.comebackCount}次)` : '全員衝刺中'}</div></div></div>
+                    <div class="award-card" style="background:linear-gradient(135deg,#ecfdf5,#d1fae5);border-color:#10b981;"><span style="font-size:26px;">⚡</span><div><div style="font-size:12px;font-weight:900;color:#047857;">連勝閃電王</div><div style="font-size:16px;font-weight:900;color:#064e3b;">${topStreak && topStreak.maxStreak > 0 ? `#${topStreak.seat}號 (${topStreak.maxStreak}連勝)` : '尚無紀錄'}</div></div></div>
+                `;
+            }
+
+            document.getElementById('tv-summary-title').textContent = `🏆 【${getActiveClassName()} — ${getActiveQuizNo()}】極速逆轉風雲榜 & 成績總表`;
+            document.getElementById('tv-summary-subtitle').textContent = `單元：${params.title || '隨堂挑戰'} ｜ 已施測：${testedCount} 題（滿分 100 分）`;
+
+            matrix.innerHTML = '';
+            for (let s = 1; s <= classSize; s++) {
+                const st = arenaStats[s], tier = getTierInfoByScore(st.arenaPoints);
+                const isTop = (summaryDisplayMode === 'ARENA') ? (topArena && topArena.arenaPoints > 0 && st.arenaPoints === topArena.arenaPoints) : (maxScore100 > 0 && st.score100 === maxScore100);
+                const row = document.createElement('div');
+                row.className = 'tv-score-row' + (isTop ? ' top-scorer' : '');
+                const seatPad = String(s).padStart(2, '0');
+                row.innerHTML = summaryDisplayMode === 'ARENA'
+                    ? `<span>#${seatPad}號 ${tier.icon}</span><span style="font-size:12px;color:#64748b;">${tier.title}(對${st.correct})</span><span style="color:${isTop ? '#b91c1c' : '#0984e3'};">${st.arenaPoints}m</span>`
+                    : `<span>#${seatPad}號 ${isTop ? '👑' : ''}</span><span style="font-size:12px;color:#64748b;">對${st.correct}/錯${st.wrong}</span><span style="color:${isTop ? '#b91c1c' : '#0984e3'};">${st.score100}分</span>`;
+                matrix.appendChild(row);
+            }
+        }
+
+        function toggleTvFullscreen() {
+            const box = document.getElementById('tv-fullscreen-box');
+            if (!document.fullscreenElement) { if (box.requestFullscreen) box.requestFullscreen(); }
+            else { if (document.exitFullscreen) document.exitFullscreen(); }
+        }
+
+        function isCurrentQuestionLocked() { return !!questionLockedState[currentQIndex]; }
+        function normalizeTasksTo4Options(rawTasks) {
+            if (!Array.isArray(rawTasks) || !rawTasks.length) return getDefaultParams().tasks;
+            return rawTasks.map(item => {
+                if (Array.isArray(item.options) && item.options.length === 4 && item.answer) {
+                    return {
+                        task: item.task || "請舉牌作答", options: item.options.map(String), answer: Number(item.answer) || 1,
+                        explanation: String(item.explanation || ""), correct: [String(item.options[(Number(item.answer) || 1) - 1])],
+                        wrong: item.options.filter((_, idx) => (idx + 1) !== (Number(item.answer) || 1)).map(String)
+                    };
+                }
+                const corr = (item.correct && item.correct[0]) ? String(item.correct[0]) : "正解";
+                const wrs = (item.wrong && item.wrong.length) ? item.wrong.slice(0, 3).map(String) : ["選項B", "選項C", "選項D"];
+                while (wrs.length < 3) wrs.push(`誘答${wrs.length + 1}`);
+                const opts = [corr, wrs[0], wrs[1], wrs[2]];
+                let seed = 0; for (let i = 0; i < (item.task || "").length; i++) seed += item.task.charCodeAt(i);
+                const ansIdx = (seed % 4), temp = opts[0]; opts[0] = opts[ansIdx]; opts[ansIdx] = temp;
+                return { task: item.task || "請舉牌作答", options: opts, answer: ansIdx + 1, explanation: String(item.explanation || ""), correct: [corr], wrong: wrs };
+            });
+        }
+
+        function loadCloudQuizFromTv() {
+            const code = (document.getElementById('tv-code-input').value.trim() || "00000").padStart(5, '0');
+            document.getElementById('tv-code-input').value = code;
+            document.getElementById('challenge-code').value = code;
+            loadCloudQuiz();
+        }
+
+        async function loadCloudQuiz(silent = false) {
+            const code = (document.getElementById('challenge-code').value.trim() || "00000").padStart(5, '0');
+            document.getElementById('challenge-code').value = code;
+            document.getElementById('tv-code-input').value = code;
+            questionAnswersMemory = {}; questionLockedState = {}; manualFeverOverrides = {}; carVisualX = {};
+            if (code === "00000") {
+                params = getDefaultParams(); currentQIndex = 0;
+                renderConfiguredClasses(); syncClassSelectDropdown();
+                updateClassSize(params.classSize || 28, true); renderCurrentQuestion();
+                if (!silent) showToast('📥 已載入預設 [00000] 二位數乘法題庫！');
+                return;
+            }
+            if (!silent) showToast(`☁️ 正在載入代碼 [${code}] 題庫...`);
+            try {
+                const res = await fetch(`${getGasUrl()}?action=getRoomConfig&roomCode=${encodeURIComponent(code)}`);
+                const data = await res.json();
+                if (data && data.status === 'success' && data.config && data.config.tasks && data.config.tasks.length > 0) {
+                    params.title = data.config.title || `代碼 ${code} 測驗`;
+                    params.classes = (Array.isArray(data.config.classes) && data.config.classes.length) ? data.config.classes : ["五年一班", "五年二班"];
+                    params.tasks = normalizeTasksTo4Options(data.config.tasks);
+                    renderConfiguredClasses(); syncClassSelectDropdown();
+                    if (data.config.classSize) updateClassSize(data.config.classSize, true);
+                    currentQIndex = 0; renderCurrentQuestion();
+                    if (!silent) showToast(`✅ 成功載入 [${code}] ${params.title}！`);
+                } else {
+                    params = getDefaultParams(); currentQIndex = 0; syncClassSelectDropdown(); renderCurrentQuestion();
+                    if (!silent) showToast(`⚠️ 查無代碼 [${code}]，已載入預設題庫！`);
+                }
+            } catch (e) { params = getDefaultParams(); currentQIndex = 0; syncClassSelectDropdown(); renderCurrentQuestion(); }
+        }
+
+        function renderCurrentQuestion() {
+            const tasks = params.tasks || []; if (!tasks.length) return;
+            const q = tasks[currentQIndex];
+            document.getElementById('q-topic-badge').textContent = params.title || "逆轉挑戰";
+            document.getElementById('q-title-display').textContent = `第 ${currentQIndex + 1} / ${tasks.length} 題：${q.task}`;
+            const lockedAns = questionLockedState[currentQIndex];
+            document.getElementById('correct-ans-select').value = lockedAns ? String(lockedAns) : "0";
+            studentAnswers = Object.assign({}, questionAnswersMemory[currentQIndex] || {});
+            frameConfirmBuffer = {};
+            renderOptionPills(); updateScoreBoard(true); updateSyncStatusLightsUI();
+        }
+
+        function renderOptionPills() {
+            const tasks = params.tasks || []; if (!tasks.length) return;
+            const q = tasks[currentQIndex];
+            const revealedAns = document.getElementById('correct-ans-select').value;
+            const optsContainer = document.getElementById('q-opts-container'); optsContainer.innerHTML = '';
+            const dots = ['●', '●●', '●●●', '●●●●'], letters = ['A', 'B', 'C', 'D'];
+
+            const feverNow = isFeverQuestion(currentQIndex);
+            const tvBox = document.getElementById('tv-fullscreen-box'), tvFeverTag = document.getElementById('tv-fever-tag'), tvFeverBtn = document.getElementById('tv-fever-btn');
+            if (tvBox) tvBox.classList.toggle('fever-active', feverNow);
+            if (tvFeverTag) tvFeverTag.style.display = feverNow ? 'inline-block' : 'none';
+            if (tvFeverBtn) tvFeverBtn.textContent = feverNow ? '🔥 雙倍:開' : '❄️ 雙倍:關';
+
+            (q.options || []).forEach((optText, idx) => {
+                const optNum = String(idx + 1), isCorr = (revealedAns === optNum);
+                const div = document.createElement('div');
+                div.className = 'q-opt-item' + (isCorr ? ' is-correct-ans' : '');
+                const prefix = useNumericLabels ? `${dots[idx]} (${optNum})` : `${dots[idx]} (${letters[idx]})`;
+                div.innerHTML = `<span style="color:${isCorr ? '#c0392b' : '#0984e3'};">${prefix}</span> <span>${escapeHtml(optText)} ${isCorr ? '👑' : ''}</span>`;
+                optsContainer.appendChild(div);
+            });
+
+            const tc = document.getElementById('tv-q-Counter'), tt = document.getElementById('tv-q-title'), to = document.getElementById('tv-opts-grid');
+            if (tc && tt && to) {
+                tc.textContent = `${params.title || '極速挑戰'} — 第 ${currentQIndex + 1} / ${tasks.length} 題`;
+                tt.textContent = q.task;
+                const qLen = (q.task || "").length;
+                tt.style.fontSize = qLen <= 14 ? 'clamp(30px, 3.8vw, 56px)' : (qLen <= 28 ? 'clamp(24px, 2.8vw, 42px)' : 'clamp(18px, 2.2vw, 32px)');
+                to.innerHTML = '';
+                (q.options || []).forEach((optText, idx) => {
+                    const optNum = String(idx + 1), isCorr = (revealedAns === optNum);
+                    const card = document.createElement('div');
+                    card.className = `tv-opt-card opt-${optNum}` + (isCorr ? ' is-correct-ans' : '');
+                    const prefix = useNumericLabels ? `${dots[idx]}(${optNum})` : `${dots[idx]}(${letters[idx]})`;
+                    card.innerHTML = `<span style="color:${isCorr ? '#b91c1c' : '#0984e3'}; font-size:0.85em;">${prefix}</span> <span>${escapeHtml(optText)} ${isCorr ? '🏁' : ''}</span>`;
+                    to.appendChild(card);
+                });
+            }
+
+            const ansIdx = (Number(q.answer) || 1) - 1;
+            const corrOptText = (q.options && q.options[ansIdx]) ? q.options[ansIdx] : '';
+            const expText = String(q.explanation || "").trim();
+            const cheatAnsEl = document.getElementById('cheat-sheet-ans'), cheatExpEl = document.getElementById('cheat-sheet-exp');
+            if (cheatAnsEl) {
+                const ansLbl = useNumericLabels ? `${dots[ansIdx]} (${ansIdx + 1})` : `${dots[ansIdx]} (${letters[ansIdx]})`;
+                cheatAnsEl.innerHTML = `👩‍🏫 <b>教師小抄：</b>正解【 <span style="color:#55efc4;">${ansLbl} ${escapeHtml(corrOptText)}</span> 】`;
+            }
+            if (cheatExpEl) cheatExpEl.textContent = expText || '（本題未設定解析）';
+
+            const tvExpBox = document.getElementById('tv-explanation-box'), mobExpBox = document.getElementById('mobile-explanation-box');
+            const shouldShowExp = (revealedAns !== "0" && showExplanationOnReveal && expText.length > 0);
+            if (tvExpBox) {
+                if (shouldShowExp) { tvExpBox.innerHTML = `📖 <b>解析：</b>${escapeHtml(expText)}`; tvExpBox.style.display = 'block'; }
+                else tvExpBox.style.display = 'none';
+            }
+            if (mobExpBox) {
+                if (shouldShowExp) { mobExpBox.innerHTML = `📖 <b>解析：</b>${escapeHtml(expText)}`; mobExpBox.style.display = 'block'; }
+                else mobExpBox.style.display = 'none';
+            }
+
+            const isLocked = (revealedAns !== "0" || !!questionLockedState[currentQIndex]);
+            const tvBadge = document.getElementById('tv-tested-badge'), mobBadge = document.getElementById('mob-tested-badge');
+            if (tvBadge) { tvBadge.style.display = isLocked ? 'inline-flex' : 'none'; document.getElementById('tv-tested-count').textContent = Object.keys(studentAnswers).length; }
+            if (mobBadge) mobBadge.style.display = isLocked ? 'inline-flex' : 'none';
+        }
+
+        function onManualCorrectChange(val, callerRole = 'MOBILE') {
+            const q = (params.tasks || [])[currentQIndex];
+            if (q && val !== "0") {
+                q.answer = Number(val); syncTaskCorrectWrong(q);
+                questionLockedState[currentQIndex] = String(val);
+                questionAnswersMemory[currentQIndex] = Object.assign({}, studentAnswers);
+                playRevealFanfare(); triggerRaceCarsBoost();
+                showToast(`🏁 已公布正解：選項 ${formatOptionLabel(val)}！答對賽車氮氣衝刺！`);
+            } else if (val === "0") delete questionLockedState[currentQIndex];
+            updateScoreBoard(true);
+            if (callerRole === 'TV') pushTvMailboxToCloud(); else pushMobileMailboxToCloud(true);
+        }
+
+        function revealCurrentAnswer(callerRole = 'MOBILE') {
+            const q = (params.tasks || [])[currentQIndex]; if (!q) return;
+            const cur = document.getElementById('correct-ans-select').value;
+            const ans = (cur !== "0") ? cur : String(q.answer || 1);
+            document.getElementById('correct-ans-select').value = ans;
+            questionLockedState[currentQIndex] = ans;
+            questionAnswersMemory[currentQIndex] = Object.assign({}, studentAnswers);
+            playRevealFanfare(); triggerRaceCarsBoost();
+            renderOptionPills(); updateScoreBoard(true);
+            if (callerRole === 'TV' || document.getElementById('panel-tv').classList.contains('active')) pushTvMailboxToCloud();
+            else pushMobileMailboxToCloud(true);
+            showToast(`🏁 已公布正解：選項 ${formatOptionLabel(ans)}！答對賽車全速超車！`);
+        }
+
+        function retestCurrentQuestion(callerRole = 'MOBILE') {
+            if (isCurrentQuestionLocked() && !confirm(`🔄 確定要解鎖「第 ${currentQIndex + 1} 題」並重新起跑計分嗎？`)) return;
+            delete questionLockedState[currentQIndex]; delete questionAnswersMemory[currentQIndex];
+            studentAnswers = {}; frameConfirmBuffer = {};
+            document.getElementById('correct-ans-select').value = "0";
+            renderOptionPills(); updateScoreBoard(true);
+            if (callerRole === 'TV' || document.getElementById('panel-tv').classList.contains('active')) pushTvMailboxToCloud();
+            else pushMobileMailboxToCloud(true);
+            showToast(`🔄 第 ${currentQIndex + 1} 題已重置！可重新掃描點火！`);
+        }
+
+        function stepQuestion(dir, callerRole = 'MOBILE') {
+            const tasks = params.tasks || []; if (!tasks.length) return;
+            if (showTvSummaryModal) toggleTvSummaryView(false, true);
+            currentQIndex = (currentQIndex + dir + tasks.length) % tasks.length;
+            hasQuestionMismatch = false;
+            document.getElementById('mobile-q-mismatch-banner').style.display = 'none';
+            renderCurrentQuestion();
+            if (callerRole === 'TV' || document.getElementById('panel-tv').classList.contains('active')) pushTvMailboxToCloud();
+            else pushMobileMailboxToCloud(true);
+        }
+
+        function toggleLabelMode() {
+            useNumericLabels = !useNumericLabels;
+            document.getElementById('btn-mode-num').textContent = useNumericLabels ? '🔢 1/2/3/4' : '🔤 A/B/C/D';
+            renderOptionPills(); updateScoreBoard(); renderWallStage();
+        }
+        function formatOptionLabel(numStr) {
+            if (!numStr) return '-'; if (useNumericLabels) return numStr;
+            return { '1': 'A', '2': 'B', '3': 'C', '4': 'D' }[numStr] || numStr;
+        }
+        function updateRecordedQuestionCounter() {
+            if (Object.keys(studentAnswers).length > 0) questionAnswersMemory[currentQIndex] = Object.assign({}, studentAnswers);
+            const answeredQCount = Object.keys(questionAnswersMemory).filter(k => Object.keys(questionAnswersMemory[k] || {}).length > 0).length;
+            const el = document.getElementById('recorded-q-count'); if (el) el.textContent = answeredQCount;
+        }
+        function resetSessionCumulative() {
+            if (!confirm('確定要重置整場測驗的所有賽車里程與作答紀錄嗎？')) return;
+            questionAnswersMemory = {}; questionLockedState = {}; studentAnswers = {}; carVisualX = {};
+            document.getElementById('correct-ans-select').value = "0";
+            updateScoreBoard(); showToast('🧹 已重置本場賽車里程與作答記憶！');
+        }
+
+        async function uploadClassSessionToGAS() {
+            updateRecordedQuestionCounter();
+            const qKeys = Object.keys(questionAnswersMemory).filter(k => Object.keys(questionAnswersMemory[k] || {}).length > 0);
+            const testedCount = qKeys.length;
+            if (testedCount === 0) { showToast('⚠️ 尚無作答紀錄可上傳！'); return; }
+            const cumulative = {}, tasks = params.tasks || [];
+            qKeys.forEach(qIdxStr => {
+                const qIdx = Number(qIdxStr), q = tasks[qIdx]; if (!q) return;
+                const corrAns = String(questionLockedState[qIdx] || q.answer || 1), ansMap = questionAnswersMemory[qIdx] || {};
+                for (let seat in ansMap) {
+                    const chosen = ansMap[seat];
+                    if (!cumulative[seat]) cumulative[seat] = { correct: 0, wrong: 0, score: 0, wrongDetails: [] };
+                    if (chosen === corrAns) cumulative[seat].correct++;
+                    else {
+                        cumulative[seat].wrong++;
+                        const chosenText = (q.options && q.options[Number(chosen) - 1]) ? q.options[Number(chosen) - 1] : `選項${chosen}`;
+                        cumulative[seat].wrongDetails.push(`${q.task}(誤選:${chosenText})`);
+                    }
+                }
+            });
+            const seats = Object.keys(cumulative), code = (document.getElementById('challenge-code').value.trim() || "00000").padStart(5, '0');
+            const topicStr = params.title || "舉牌逆轉王", className = getActiveClassName(), quizNo = getActiveQuizNo();
+            showToast(`☁️ 正在上傳【${className}｜${quizNo}】共 ${seats.length} 人成績...`);
+            const batchRecords = seats.map(seat => {
+                const st = cumulative[seat], studentTotalQ = Math.max(testedCount, (st.correct + st.wrong) || 1);
+                st.score = Math.round((st.correct / studentTotalQ) * 100);
+                const wrongStr = st.wrongDetails.length ? st.wrongDetails.join(', ') : "全對無失誤";
+                const rankBadge = st.score >= 80 ? "👑 極速車王" : (st.score >= 60 ? "🥇 黃金車神" : "🥉 新秀車手");
+                const seatPad = String(seat).padStart(2, '0');
+                return {
+                    seatNo: seatPad, playerName: `${className}_${seatPad}號 (${quizNo})`, score: st.score,
+                    correctCount: st.correct, wrongCount: st.wrong, maxCombo: st.correct, durationSeconds: studentTotalQ * 15,
+                    rankTitle: `${rankBadge}||${topicStr}||${wrongStr}||${className}||${quizNo}`
+                };
+            });
+            try {
+                const upRes = await fetch(getGasUrl(), { method: 'POST', headers: { 'Content-Type': 'text/plain;charset=utf-8' }, body: JSON.stringify({ action: "submitBatchScores", roomCode: code, records: batchRecords, wantLeaderboard: false }) });
+                const upData = await upRes.json();
+                if (!upData || upData.status !== 'success') { showToast((upData && upData.message) || '❌ 上傳失敗，請稍後再試'); return; }
+                toggleTvSummaryView(true, false);
+                showToast(`🎉 成功儲存【${className}｜${quizNo}】百分制成績！`);
+                await detectNextQuizNumberForClass(className);
+            } catch (e) { showToast('❌ 上傳失敗，請檢查網路連線'); }
+        }
+
+        function checkIframeEnvironment() {
+            const isAboutBlank = (location.href === 'about:blank' || window.__IS_STANDALONE__ === true);
+            const inIframe = (window.self !== window.top);
+            const banner = document.getElementById('sites-breakout-banner'), topBtn = document.getElementById('btn-top-breakout');
+            if (isAboutBlank || !inIframe) { if (banner) banner.style.display = 'none'; if (topBtn) topBtn.style.display = 'none'; }
+            else if (banner) banner.style.display = 'block';
+        }
+        function openStandaloneFullTab() {
+            const clone = document.documentElement.cloneNode(true);
+            const banner = clone.querySelector('#sites-breakout-banner'); if (banner) banner.style.display = 'none';
+            const topBtn = clone.querySelector('#btn-top-breakout'); if (topBtn) topBtn.style.display = 'none';
+            const win = window.open('', '_blank');
+            if (!win) { alert('⚠️ 請允許彈出視窗！'); return; }
+            win.document.open();
+            win.document.write("<!DOCTYPE html>\n<script>window.__IS_STANDALONE__ = true;<\/script>\n" + clone.outerHTML);
+            win.document.close();
+        }
+
+        function rotate16BitsCW(code) {
+            let out = 0;
+            for (let r = 0; r < 4; r++) {
+                for (let c = 0; c < 4; c++) {
+                    if ((code >> (15 - (r * 4 + c))) & 1) out |= (1 << (15 - (c * 4 + (3 - r))));
+                }
+            }
+            return out;
+        }
+        function popcount16(x) { let c = 0; while (x) { c += x & 1; x >>= 1; } return c; }
+
+        const MARKER_CODES = (function () {
+            const sel = [];
+            for (let minHam = 3; minHam >= 2 && sel.length < 100; minHam--) {
+                for (let c = 0x0115; c <= 0x7FFE && sel.length < 100; c++) {
+                    const ones = popcount16(c); if (ones < 5 || ones > 11) continue;
+                    const r0 = c, r1 = rotate16BitsCW(r0), r2 = rotate16BitsCW(r1), r3 = rotate16BitsCW(r2);
+                    if (popcount16(r0 ^ r1) < 4 || popcount16(r0 ^ r2) < 4 || popcount16(r0 ^ r3) < 4) continue;
+                    let conflict = false;
+                    for (let i = 0; i < sel.length; i++) {
+                        if (popcount16(sel[i] ^ r0) < minHam || popcount16(sel[i] ^ r1) < minHam || popcount16(sel[i] ^ r2) < minHam || popcount16(sel[i] ^ r3) < minHam) { conflict = true; break; }
+                    }
+                    if (!conflict) sel.push(c);
+                }
+            }
+            return sel;
+        })();
+
+        function drawFrontShieldCanvas(canvas, seatNo) {
+            if (!canvas) return;
+            const ctx = canvas.getContext('2d'), size = canvas.width;
+            ctx.fillStyle = '#ffffff'; ctx.fillRect(0, 0, size, size);
+            const code = MARKER_CODES[(seatNo - 1) % MARKER_CODES.length] || 0x014B;
+            const margin = Math.round(size * 0.16), boxSize = size - margin * 2, cell = boxSize / 6;
+            ctx.fillStyle = '#7f8c8d'; ctx.font = `bold ${Math.round(size * 0.042)}px sans-serif`; ctx.textAlign = 'center'; ctx.textBaseline = 'middle';
+            ctx.fillText(`#${seatNo}`, size / 2, margin * 0.45); ctx.fillText(`#${seatNo}`, size / 2, size - margin * 0.45);
+            ctx.fillStyle = '#000000'; ctx.beginPath(); ctx.roundRect(margin, margin, boxSize, boxSize, cell * 0.75); ctx.fill();
+            const innerX = margin + cell, innerY = margin + cell, innerSize = cell * 4;
+            ctx.fillStyle = '#ffffff'; ctx.beginPath(); ctx.roundRect(innerX, innerY, innerSize, innerSize, cell * 0.25); ctx.fill();
+            ctx.fillStyle = '#000000';
+            for (let r = 0; r < 4; r++) {
+                for (let c = 0; c < 4; c++) {
+                    if (((code >> (15 - (r * 4 + c))) & 1) === 1) {
+                        ctx.beginPath(); ctx.arc(innerX + (c + 0.5) * cell, innerY + (r + 0.5) * cell, cell * 0.46, 0, Math.PI * 2); ctx.fill();
+                    }
+                }
+            }
+        }
+
+        let wallSeatChoices = {}, wallTiltEnabled = false;
+        function initWallStage() { for (let i = 1; i <= 30; i++) wallSeatChoices[i] = 1; renderWallStage(); }
+        function renderWallStage() {
+            const stage = document.getElementById('wall-stage'); if (!stage) return;
+            stage.innerHTML = '';
+            for (let i = 1; i <= 30; i++) {
+                const choice = wallSeatChoices[i] || 1, item = document.createElement('div');
+                item.className = 'wall-item';
+                item.onclick = () => { wallSeatChoices[i] = (wallSeatChoices[i] % 4) + 1; updateSingleWallCard(i); };
+                const c = document.createElement('canvas'); c.id = `wall-canvas-${i}`; c.width = 220; c.height = 220;
+                drawFrontShieldCanvas(c, i);
+                const tilt = wallTiltEnabled ? ((i % 2 === 0 ? 1 : -1) * ((i * 3) % 12)) : 0;
+                c.style.transform = `rotate(${getFrontDegreeForSeatAnswer(i, choice) + tilt}deg)`;
+                const lbl = document.createElement('div'); lbl.className = 'wall-item-label'; lbl.id = `wall-lbl-${i}`;
+                lbl.innerHTML = `<span>#${i}號</span> <span style="color:#0984e3;">選 ${formatOptionLabel(String(choice))}</span>`;
+                item.appendChild(c); item.appendChild(lbl); stage.appendChild(item);
+            }
+        }
+        function updateSingleWallCard(seat) {
+            const choice = wallSeatChoices[seat] || 1, c = document.getElementById(`wall-canvas-${seat}`), lbl = document.getElementById(`wall-lbl-${seat}`);
+            const tilt = wallTiltEnabled ? ((seat % 2 === 0 ? 1 : -1) * ((seat * 3) % 12)) : 0;
+            if (c) c.style.transform = `rotate(${getFrontDegreeForSeatAnswer(seat, choice) + tilt}deg)`;
+            if (lbl) lbl.innerHTML = `<span>#${seat}號</span> <span style="color:#0984e3;">選 ${formatOptionLabel(String(choice))}</span>`;
+        }
+        function setAllWallCards(choice) { for (let i = 1; i <= 30; i++) { wallSeatChoices[i] = choice; updateSingleWallCard(i); } }
+        function randomizeWallCards() { for (let i = 1; i <= 30; i++) { wallSeatChoices[i] = Math.floor(Math.random() * 4) + 1; updateSingleWallCard(i); } }
+        function toggleWallTilt() { wallTiltEnabled = !wallTiltEnabled; for (let i = 1; i <= 30; i++) updateSingleWallCard(i); }
+        function toggleWallFullscreen() {
+            const target = document.getElementById('wall-fullscreen-target');
+            if (!document.fullscreenElement) { if (target.requestFullscreen) target.requestFullscreen(); } else { if (document.exitFullscreen) document.exitFullscreen(); }
+        }
+
+        let stream = null, scanning = false, digitalZoom = 1, studentAnswers = {}, frameConfirmBuffer = {}, audioCtx = null;
+        function ensureAudio() { if (!audioCtx) audioCtx = new (window.AudioContext || window.webkitAudioContext)(); if (audioCtx.state === 'suspended') audioCtx.resume(); }
+        function playDingDong() {
+            try {
+                ensureAudio();
+                const now = audioCtx.currentTime, osc = audioCtx.createOscillator(), g = audioCtx.createGain();
+                osc.type = 'triangle';
+                osc.frequency.setValueAtTime(784, now); osc.frequency.setValueAtTime(1046.5, now + 0.06); osc.frequency.setValueAtTime(1318.5, now + 0.12);
+                g.gain.setValueAtTime(0.22, now); g.gain.exponentialRampToValueAtTime(0.01, now + 0.22);
+                osc.connect(g); g.connect(audioCtx.destination); osc.start(now); osc.stop(now + 0.22);
+            } catch (e) {}
+        }
+        function playFeverSound(isOn) {
+            try {
+                ensureAudio();
+                const now = audioCtx.currentTime, osc = audioCtx.createOscillator(), g = audioCtx.createGain();
+                osc.type = 'sawtooth';
+                osc.frequency.setValueAtTime(isOn ? 440 : 660, now); osc.frequency.exponentialRampToValueAtTime(isOn ? 880 : 330, now + 0.25);
+                g.gain.setValueAtTime(0.15, now); g.gain.exponentialRampToValueAtTime(0.01, now + 0.26);
+                osc.connect(g); g.connect(audioCtx.destination); osc.start(now); osc.stop(now + 0.26);
+            } catch (e) {}
+        }
+        function playRevealFanfare() {
+            try {
+                ensureAudio();
+                [523.25, 659.25, 783.99, 1046.5].forEach((freq, i) => {
+                    const now = audioCtx.currentTime + i * 0.065, osc = audioCtx.createOscillator(), g = audioCtx.createGain();
+                    osc.type = 'triangle'; osc.frequency.setValueAtTime(freq, now);
+                    g.gain.setValueAtTime(0.2, now); g.gain.exponentialRampToValueAtTime(0.01, now + 0.24);
+                    osc.connect(g); g.connect(audioCtx.destination); osc.start(now); osc.stop(now + 0.24);
+                });
+            } catch (e) {}
+        }
+
+        function spawnCanvasScanBurst(cx, cy, seatNo, ansLabel) {
+            const colors = ['#00cec9', '#facc15', '#ff7675', '#55efc4', '#a29bfe'];
+            for (let i = 0; i < 14; i++) {
+                const angle = (Math.PI * 2 * i) / 14, speed = 2.5 + Math.random() * 3.5;
+                scanParticles.push({ x: cx, y: cy, vx: Math.cos(angle) * speed, vy: Math.sin(angle) * speed, color: colors[i % colors.length], alpha: 1, r: 4 + Math.random() * 4, text: i === 0 ? `🏎️#${seatNo} 選${ansLabel}!` : null });
+            }
+        }
+        function renderAndStepScanParticles(ctx) {
+            for (let i = scanParticles.length - 1; i >= 0; i--) {
+                const p = scanParticles[i]; p.x += p.vx; p.y += p.vy; p.alpha -= 0.045;
+                if (p.alpha <= 0) { scanParticles.splice(i, 1); continue; }
+                ctx.save(); ctx.globalAlpha = Math.max(0, p.alpha); ctx.fillStyle = p.color;
+                ctx.beginPath(); ctx.arc(p.x, p.y, p.r, 0, Math.PI * 2); ctx.fill();
+                if (p.text) { ctx.font = '900 20px "Segoe UI", sans-serif'; ctx.fillStyle = '#fff200'; ctx.strokeStyle = '#000'; ctx.lineWidth = 4; ctx.strokeText(p.text, p.x - 45, p.y - 14); ctx.fillText(p.text, p.x - 45, p.y - 14); }
+                ctx.restore();
+            }
+        }
+
+        function triggerNativeCamera() { document.getElementById('native-camera-input').click(); }
+        function handleNativeCameraSnap(e) {
+            const f = e.target.files && e.target.files[0]; if (!f) return; stopCamera();
+            const img = new Image();
+            img.onload = function() {
+                const cv = document.getElementById('scan-canvas'), ctx = cv.getContext('2d', { willReadFrequently: true });
+                cv.width = 1280; cv.height = Math.round((img.height / img.width) * 1280);
+                ctx.drawImage(img, 0, 0, cv.width, cv.height);
+                const cnt = detectMarkersInCanvas(ctx, cv.width, cv.height, true);
+                showToast(cnt > 0 ? `📸 快門秒掃成功！辨識出 ${cnt} 張卡！` : '🔍 未偵測到完整卡片，請再拍一張！');
+                URL.revokeObjectURL(img.src);
+            };
+            img.src = URL.createObjectURL(f);
+        }
+
+        async function startCamera() {
+            const isAboutBlank = (location.href === 'about:blank' || window.__IS_STANDALONE__ === true);
+            if (window.self !== window.top && !isAboutBlank) { openStandaloneFullTab(); return; }
+            if (!navigator.mediaDevices || typeof navigator.mediaDevices.getUserMedia !== 'function') {
+                document.getElementById('ipad-snap-helper').style.display = 'flex'; triggerNativeCamera(); return;
+            }
+            try {
+                stream = await navigator.mediaDevices.getUserMedia({ video: { facingMode: { ideal: 'environment' }, width: { ideal: 1920 }, height: { ideal: 1440 } }, audio: false });
+                const v = document.getElementById('video-preview'); v.srcObject = stream; await v.play();
+                scanning = true; document.getElementById('btn-start-cam').style.display = 'none'; document.getElementById('btn-stop-cam').style.display = 'inline-flex';
+                requestAnimationFrame(scanLoop);
+            } catch (e) { document.getElementById('ipad-snap-helper').style.display = 'flex'; triggerNativeCamera(); }
+        }
+        function stopCamera() {
+            scanning = false; if (stream) { stream.getTracks().forEach(t => t.stop()); stream = null; }
+            document.getElementById('btn-start-cam').style.display = 'inline-flex'; document.getElementById('btn-stop-cam').style.display = 'none';
+        }
+        function setZoom(z, btn) { digitalZoom = z; document.querySelectorAll('.zoom-btn').forEach(b => b.classList.remove('active')); if (btn) btn.classList.add('active'); }
+
+        function scanLoop() {
+            if (!scanning) return;
+            const v = document.getElementById('video-preview'), cv = document.getElementById('scan-canvas'), ctx = cv.getContext('2d', { willReadFrequently: true });
+            if (v.readyState === v.HAVE_ENOUGH_DATA && v.videoWidth > 0) {
+                const tw = 960, th = Math.round((v.videoHeight / v.videoWidth) * tw);
+                if (cv.width !== tw || cv.height !== th) { cv.width = tw; cv.height = th; }
+                const cw = v.videoWidth / digitalZoom, ch = v.videoHeight / digitalZoom;
+                ctx.drawImage(v, (v.videoWidth - cw)/2, (v.videoHeight - ch)/2, cw, ch, 0, 0, tw, th);
+                detectMarkersInCanvas(ctx, tw, th, false);
+                renderAndStepScanParticles(ctx);
+            }
+            requestAnimationFrame(scanLoop);
+        }
+
+        let opticalPairLock = false;
+        function detectMarkersInCanvas(ctx, w, h, isStaticSnap = false) {
+            const data = ctx.getImageData(0, 0, w, h).data;
+            const showDebug = document.getElementById('chk-debug').checked;
+            const questionLocked = isCurrentQuestionLocked();
+            const isPairingWindowActive = (!isMobilePaired && !isStandaloneQuizMode) || (Date.now() < allowOpticalPairUntil);
+
+            const sw = w, sh = h, gray = new Uint8Array(sw * sh), integral = new Int32Array(sw * sh);
+            for (let y = 0; y < sh; y++) {
+                let rSum = 0; const rowOff = y * sw;
+                for (let x = 0; x < sw; x++) {
+                    const idx = (rowOff + x) << 2, g = (data[idx] * 77 + data[idx+1] * 150 + data[idx+2] * 29) >> 8;
+                    gray[rowOff + x] = g; rSum += g;
+                    integral[rowOff + x] = (y > 0 ? integral[rowOff - sw + x] : 0) + rSum;
+                }
+            }
+            function getMean(cx, cy, r) {
+                const x1 = Math.max(0, cx - r), y1 = Math.max(0, cy - r), x2 = Math.min(sw - 1, cx + r), y2 = Math.min(sh - 1, cy + r);
+                let sum = integral[y2*sw + x2]; if (x1 > 0) sum -= integral[y2*sw + x1-1]; if (y1 > 0) sum -= integral[(y1-1)*sw + x2]; if (x1 > 0 && y1 > 0) sum += integral[(y1-1)*sw + x1-1];
+                return sum / ((x2 - x1 + 1) * (y2 - y1 + 1));
+            }
+
+            const bin = new Uint8Array(sw * sh), rad = Math.max(24, Math.floor(Math.min(sw, sh) / 6));
+            for (let y = 0; y < sh; y++) {
+                const rowOff = y * sw;
+                for (let x = 0; x < sw; x++) bin[rowOff + x] = (gray[rowOff + x] < getMean(x, y, rad) * 0.87) ? 1 : 0;
+            }
+
+            const visited = new Uint8Array(sw * sh); let matched = 0; const seen = {};
+            for (let y = 4; y < sh - 4; y += 2) {
+                for (let x = 4; x < sw - 4; x += 2) {
+                    const p = y * sw + x; if (visited[p] || bin[p] === 0) continue;
+                    let minX = x, maxX = x, minY = y, maxY = y, area = 0;
+                    let tl = { x, y, val: x+y }, tr = { x, y, val: x-y }, br = { x, y, val: x+y }, bl = { x, y, val: x-y };
+                    const stack = [p]; visited[p] = 1;
+                    while (stack.length > 0) {
+                        const cur = stack.pop(), cy = Math.floor(cur / sw), cx = cur % sw; area++;
+                        if (cx < minX) minX = cx; if (cx > maxX) maxX = cx; if (cy < minY) minY = cy; if (cy > maxY) maxY = cy;
+                        const sXY = cx+cy, dXY = cx-cy;
+                        if (sXY < tl.val) { tl.val = sXY; tl.x = cx; tl.y = cy; }
+                        if (dXY > tr.val) { tr.val = dXY; tr.x = cx; tr.y = cy; }
+                        if (sXY > br.val) { br.val = sXY; br.x = cx; br.y = cy; }
+                        if (dXY < bl.val) { bl.val = dXY; bl.x = cx; bl.y = cy; }
+                        if (area > sw * sh * 0.75) break;
+                        const n1 = cur-1, n2 = cur+1, n3 = cur-sw, n4 = cur+sw;
+                        if (cx > 0 && !visited[n1] && bin[n1]) { visited[n1] = 1; stack.push(n1); }
+                        if (cx < sw-1 && !visited[n2] && bin[n2]) { visited[n2] = 1; stack.push(n2); }
+                        if (cy > 0 && !visited[n3] && bin[n3]) { visited[n3] = 1; stack.push(n3); }
+                        if (cy < sh-1 && !visited[n4] && bin[n4]) { visited[n4] = 1; stack.push(n4); }
+                    }
+
+                    const bw = maxX - minX, bh = maxY - minY;
+                    if (minX <= 3 || minY <= 3 || maxX >= sw - 4 || maxY >= sh - 4 || bw < 18 || bh < 18 || bw > sw * 0.88 || bh > sh * 0.88) continue;
+                    const rat = bw / bh; if (rat < 0.68 || rat > 1.46) continue;
+                    const fillRatio = area / (bw * bh); if (fillRatio < 0.24 || fillRatio > 0.82) continue;
+
+                    const topLen = Math.hypot(tr.x - tl.x, tr.y - tl.y), botLen = Math.hypot(br.x - bl.x, br.y - bl.y);
+                    const leftLen = Math.hypot(bl.x - tl.x, bl.y - tl.y), rightLen = Math.hypot(br.x - tr.x, br.y - tr.y);
+                    const diag1 = Math.hypot(br.x - tl.x, br.y - tl.y), diag2 = Math.hypot(bl.x - tr.x, bl.y - tr.y);
+                    if (topLen < 12 || botLen < 12 || leftLen < 12 || rightLen < 12) continue;
+                    if (Math.max(topLen, botLen) / Math.min(topLen, botLen) > 1.45) continue;
+                    if (Math.max(leftLen, rightLen) / Math.min(leftLen, rightLen) > 1.45) continue;
+                    if (Math.max(diag1, diag2) / Math.min(diag1, diag2) > 1.38) continue;
+
+                    const samplePatchR = Math.max(1, Math.min(6, Math.floor(Math.min(bw, bh) / 22)));
+                    let minG = 255, maxG = 0; const cellG = new Float32Array(36);
+                    for (let r = 0; r < 6; r++) {
+                        const v = (r + 0.5) / 6;
+                        for (let c = 0; c < 6; c++) {
+                            const u = (c + 0.5) / 6;
+                            const sx = Math.round((1 - u)*(1 - v)*tl.x + u*(1 - v)*tr.x + u*v*br.x + (1 - u)*v*bl.x);
+                            const sy = Math.round((1 - u)*(1 - v)*tl.y + u*(1 - v)*tr.y + u*v*br.y + (1 - u)*v*bl.y);
+                            const gVal = getMean(sx, sy, samplePatchR);
+                            cellG[r * 6 + c] = gVal;
+                            if (gVal < minG) minG = gVal; if (gVal > maxG) maxG = gVal;
+                        }
+                    }
+
+                    if (maxG - minG < 36) continue;
+                    const mThresh = minG + (maxG - minG) * 0.52;
+
+                    let borderB = 0, borderGTotal = 0, codeBits = 0, innerBlackCnt = 0, innerWhiteGTotal = 0, innerWhiteCnt = 0;
+                    for (let r = 0; r < 6; r++) {
+                        for (let c = 0; c < 6; c++) {
+                            const isCorner = (r === 0 || r === 5) && (c === 0 || c === 5);
+                            const gVal = cellG[r * 6 + c], isB = gVal < mThresh;
+                            if (r === 0 || r === 5 || c === 0 || c === 5) {
+                                if (!isCorner) { if (isB) borderB++; borderGTotal += gVal; }
+                            } else {
+                                const bIdx = 15 - ((r - 1) * 4 + (c - 1));
+                                if (isB) { codeBits |= (1 << bIdx); innerBlackCnt++; } else { innerWhiteGTotal += gVal; innerWhiteCnt++; }
+                            }
+                        }
+                    }
+                    if (borderB < 12 || innerBlackCnt < 5 || innerBlackCnt > 11 || innerWhiteCnt < 5) continue;
+                    if ((innerWhiteGTotal / innerWhiteCnt) - (borderGTotal / 12) < 32) continue;
+
+                    let outerWhitePass = 0, validQPoints = 0;
+                    const qOffsets = [{ u: 0.5, v: -0.10 }, { u: 0.5, v: 1.10 }, { u: -0.10, v: 0.5 }, { u: 1.10, v: 0.5 }, { u: 0.25, v: -0.10 }, { u: 0.75, v: 1.10 }, { u: -0.10, v: 0.25 }, { u: 1.10, v: 0.75 }];
+                    for (let q = 0; q < qOffsets.length; q++) {
+                        const u = qOffsets[q].u, v = qOffsets[q].v;
+                        const qx = Math.round((1 - u)*(1 - v)*tl.x + u*(1 - v)*tr.x + u*v*br.x + (1 - u)*v*bl.x);
+                        const qy = Math.round((1 - u)*(1 - v)*tl.y + u*(1 - v)*tr.y + u*v*br.y + (1 - u)*v*bl.y);
+                        if (qx >= 2 && qx < sw - 2 && qy >= 2 && qy < sh - 2) { validQPoints++; if (getMean(qx, qy, samplePatchR) > mThresh) outerWhitePass++; }
+                    }
+                    if (validQPoints >= 4 && outerWhitePass < Math.ceil(validQPoints * 0.75)) continue;
+
+                    const rx = minX, ry = minY, rw = bw, rh = bh;
+                    const studentMatch = matchMarkerCodeStrict(codeBits);
+
+                    if (!studentMatch && isPairingWindowActive && !opticalPairLock) {
+                        const decodedPair = decode16BitsToPairCode(codeBits);
+                        if (decodedPair) {
+                            ctx.strokeStyle = '#facc15'; ctx.lineWidth = 5; ctx.strokeRect(rx, ry, rw, rh);
+                            if (opticalPairConfirm.code === decodedPair) opticalPairConfirm.count++;
+                            else opticalPairConfirm = { code: decodedPair, count: 1 };
+                            if (opticalPairConfirm.count >= (isStaticSnap ? 1 : 5)) {
+                                opticalPairConfirm = { code: "", count: 0 };
+                                document.getElementById('mobile-pair-input').value = decodedPair;
+                                opticalPairLock = true;
+                                connectMobileToTv(decodedPair).finally(() => { setTimeout(() => { opticalPairLock = false; }, 3000); });
+                            }
+                            continue;
+                        }
+                    }
+
+                    if (!studentMatch || studentMatch.seat > classSize || hasQuestionMismatch) continue;
+
+                    const cx = rx + rw / 2, cy = ry + rh / 2, radius = Math.max(rw, rh) * 0.62;
+                    const seat = studentMatch.seat, newAns = studentMatch.answer, existingAns = studentAnswers[seat];
+                    seen[seat] = newAns;
+
+                    if (!frameConfirmBuffer[seat]) frameConfirmBuffer[seat] = { ans: newAns, count: 1, missed: 0 };
+                    else if (frameConfirmBuffer[seat].ans === newAns) { frameConfirmBuffer[seat].count++; frameConfirmBuffer[seat].missed = 0; }
+                    else frameConfirmBuffer[seat] = { ans: newAns, count: 1, missed: 0 };
+
+                    const isChangingExisting = (existingAns && existingAns !== newAns);
+                    const requiredFrames = isStaticSnap ? 1 : (isChangingExisting ? 20 : 8);
+                    const currentFrames = frameConfirmBuffer[seat].count, dispAns = formatOptionLabel(newAns);
+
+                    if (currentFrames >= requiredFrames) {
+                        matched++;
+                        if (showDebug) { ctx.save(); ctx.strokeStyle = questionLocked ? '#e17055' : '#00f2fe'; ctx.lineWidth = 4; ctx.beginPath(); ctx.arc(cx, cy, radius, 0, Math.PI * 2); ctx.stroke(); ctx.restore(); }
+                        const labelW = Math.max(rw, 136), labelY = ry > 34 ? ry - 34 : ry + 2;
+                        ctx.fillStyle = questionLocked ? 'rgba(225, 112, 85, 0.95)' : 'rgba(0, 184, 148, 0.95)';
+                        ctx.fillRect(rx, labelY, labelW, 28);
+                        ctx.fillStyle = '#ffffff'; ctx.font = '900 16px "Segoe UI", sans-serif';
+                        ctx.fillText(questionLocked ? `🔒#${seat}(已鎖定)` : `🏎️#${seat}:選${dispAns}`, rx + 6, labelY + 20);
+
+                        if (!questionLocked && !(document.getElementById('chk-lock-answer').checked && existingAns)) {
+                            if (studentAnswers[seat] !== newAns) {
+                                studentAnswers[seat] = newAns; justScannedSeats[seat] = Date.now();
+                                spawnCanvasScanBurst(cx, cy, seat, dispAns); spawnTvScanFloatingBubbles([seat]);
+                                playDingDong(); updateScoreBoard();
+                            }
+                        }
+                    } else {
+                        const ratio = Math.min(0.99, currentFrames / requiredFrames), pct = Math.round(ratio * 100);
+                        if (showDebug) { ctx.save(); ctx.strokeStyle = isChangingExisting ? '#f39c12' : '#facc15'; ctx.lineWidth = 5; ctx.beginPath(); ctx.arc(cx, cy, radius, -Math.PI / 2, -Math.PI / 2 + Math.PI * 2 * ratio); ctx.stroke(); ctx.restore(); }
+                        const labelW = Math.max(rw, 145), labelY = ry > 34 ? ry - 34 : ry + 2;
+                        ctx.fillStyle = isChangingExisting ? 'rgba(243, 156, 18, 0.92)' : 'rgba(9, 132, 227, 0.88)';
+                        ctx.fillRect(rx, labelY, labelW, 26);
+                        ctx.fillStyle = '#ffffff'; ctx.font = '900 14px "Segoe UI", sans-serif';
+                        ctx.fillText(isChangingExisting ? `⏳#${seat}改選${dispAns}(${pct}%)` : `🎯#${seat}:點火中(${pct}%)`, rx + 6, labelY + 18);
+                    }
+                }
+            }
+            if (!isStaticSnap) {
+                for (let s in frameConfirmBuffer) {
+                    if (!seen[s]) { frameConfirmBuffer[s].missed = (frameConfirmBuffer[s].missed || 0) + 1; if (frameConfirmBuffer[s].missed > 2) delete frameConfirmBuffer[s]; }
+                }
+            }
+            return matched;
+        }
+
+        function matchMarkerCodeStrict(observed) {
+            const limit = Math.min(classSize, MARKER_CODES.length);
+            for (let i = 0; i < limit; i++) {
+                const seatNo = i + 1, dirs = getSeatRotationMap(seatNo);
+                let target = MARKER_CODES[i];
+                for (let rot = 0; rot < 4; rot++) {
+                    if (observed === target) return { seat: seatNo, answer: dirs[rot] };
+                    target = rotate16BitsCW(target);
+                }
+            }
+            return null;
+        }
+
+        function updateClassSize(val, skipSync = false) {
+            classSize = Math.max(10, Math.min(100, parseInt(val) || 28));
+            params.classSize = classSize;
+            document.getElementById('lbl-class-size').textContent = classSize;
+            document.getElementById('slider-class-size').value = classSize;
+            document.getElementById('set-class-size').value = classSize;
+            document.getElementById('total-seat-count').textContent = classSize;
+            renderSeatGrid(); renderTvSeatGrid(); updateScoreBoard(skipSync);
+        }
+
+        function getGridColsClass(n) { return n > 60 ? 'cols-10' : (n > 35 ? 'cols-8' : ''); }
+        function renderSeatGrid() {
+            const grid = document.getElementById('seat-grid'); if (!grid) return;
+            grid.className = 'seat-grid ' + getGridColsClass(classSize);
+            grid.innerHTML = '';
+            for (let i = 1; i <= classSize; i++) {
+                const div = document.createElement('div');
+                div.id = `seat-cell-${i}`; div.className = 'seat-cell';
+                div.onclick = () => cycleSeatAnswer(i);
+                div.innerHTML = `${i}號<br><span id="seat-ans-${i}">-</span>`;
+                grid.appendChild(div);
+            }
+        }
+
+        function renderTvSeatGrid() {
+            const grid = document.getElementById('tv-seat-grid'); if (!grid) return;
+            grid.innerHTML = '';
+            for (let i = 1; i <= classSize; i++) {
+                const chip = document.createElement('div');
+                chip.id = `tv-seat-cell-${i}`; chip.className = 'mini-seat-chip';
+                chip.onclick = () => cycleSeatAnswer(i);
+                chip.innerHTML = `#${i} <span id="tv-seat-ans-${i}">-</span>`;
+                grid.appendChild(chip);
+            }
+        }
+
+        function cycleSeatAnswer(seatNo) {
+            if (isCurrentQuestionLocked()) { showToast('🔒 本題已公布正解並鎖定！若需修改請點「🔄 重跑本題」'); return; }
+            const cur = studentAnswers[seatNo];
+            if (!cur) studentAnswers[seatNo] = '1';
+            else if (cur === '1') studentAnswers[seatNo] = '2';
+            else if (cur === '2') studentAnswers[seatNo] = '3';
+            else if (cur === '3') studentAnswers[seatNo] = '4';
+            else delete studentAnswers[seatNo];
+            justScannedSeats[seatNo] = Date.now();
+            spawnTvScanFloatingBubbles([seatNo]);
+            playDingDong(); updateScoreBoard();
+        }
+
+        function updateScoreBoard(skipPush = false) {
+            renderOptionPills();
+            if (Object.keys(studentAnswers).length > 0) questionAnswersMemory[currentQIndex] = Object.assign({}, studentAnswers);
+            cachedArenaStats = computeArenaStandings();
+            let counts = { '1': 0, '2': 0, '3': 0, '4': 0 }, total = 0, correct = 0;
+            const correctAns = document.getElementById('correct-ans-select').value;
+            const mask = (tvMaskAnswersBeforeReveal && correctAns === "0");
+
+            for (let i = 1; i <= classSize; i++) {
+                const ans = studentAnswers[i]; if (ans) { counts[ans]++; total++; }
+                const isCorr = (ans && correctAns !== "0" && ans === correctAns);
+                if (isCorr) correct++;
+
+                const cell = document.getElementById(`seat-cell-${i}`), span = document.getElementById(`seat-ans-${i}`);
+                if (cell && span) {
+                    let cls = 'seat-cell' + (ans ? ` answered-${ans}` : ''), lbl = formatOptionLabel(ans);
+                    if (ans && correctAns !== "0") { cls += isCorr ? ' is-correct-seat' : ' is-wrong-seat'; lbl = isCorr ? `★ ${lbl} ✓` : `${lbl} ✗`; }
+                    cell.className = cls; span.textContent = lbl;
+                }
+
+                const tvChip = document.getElementById(`tv-seat-cell-${i}`), tvSpan = document.getElementById(`tv-seat-ans-${i}`);
+                if (tvChip && tvSpan) {
+                    if (!ans) { tvChip.className = 'mini-seat-chip'; tvSpan.textContent = '-'; }
+                    else if (mask) { tvChip.className = 'mini-seat-chip chip-masked'; tvSpan.textContent = '🔥'; }
+                    else {
+                        tvChip.className = `mini-seat-chip chip-${ans}` + (isCorr ? ' chip-correct' : '');
+                        tvSpan.textContent = formatOptionLabel(ans);
+                    }
+                }
+            }
+
+            const pct = classSize > 0 ? Math.min(100, Math.round((total / classSize) * 100)) : 0;
+            const fillEl = document.getElementById('tv-energy-fill'); if (fillEl) fillEl.style.width = pct + '%';
+
+            const podiumEl = document.getElementById('arena-podium-strip');
+            if (podiumEl) {
+                const sorted = Object.values(cachedArenaStats).sort((a, b) => b.arenaPoints - a.arenaPoints || b.correct - a.correct).slice(0, 5);
+                const rankIcons = ['👑1st', '🥈2nd', '🥉3rd', '🏅4th', '⭐5th'];
+                podiumEl.innerHTML = sorted.map((st, idx) => `<span class="podium-pill ${idx === 0 && st.arenaPoints > 0 ? 'rank-1' : ''}">${rankIcons[idx]} #${st.seat} (${st.arenaPoints}m)</span>`).join('');
+            }
+
+            document.getElementById('answered-count').textContent = total;
+            document.getElementById('stat-1').textContent = counts['1']; document.getElementById('stat-2').textContent = counts['2'];
+            document.getElementById('stat-3').textContent = counts['3']; document.getElementById('stat-4').textContent = counts['4'];
+            document.getElementById('tv-answered-ratio').textContent = `${total} / ${classSize} (${pct}%)`;
+            document.getElementById('tv-stat-1').textContent = mask ? '?' : counts['1'];
+            document.getElementById('tv-stat-2').textContent = mask ? '?' : counts['2'];
+            document.getElementById('tv-stat-3').textContent = mask ? '?' : counts['3'];
+            document.getElementById('tv-stat-4').textContent = mask ? '?' : counts['4'];
+
+            const badge = document.getElementById('accuracy-badge'), tvAcc = document.getElementById('tv-accuracy-label');
+            if (correctAns !== "0" && total > 0) {
+                const r = Math.round((correct / total) * 100), txt = `🎯 答對率：${r}% (${correct}/${total})`;
+                badge.textContent = txt; if (tvAcc) tvAcc.textContent = txt;
+            } else { badge.textContent = ''; if (tvAcc) tvAcc.textContent = ''; }
+
+            if (isMobilePaired || isStandaloneQuizMode) updateRecordedQuestionCounter();
+            if (showTvSummaryModal) renderTvSummaryMatrix();
+            if (!skipPush) { if (document.getElementById('panel-tv').classList.contains('active')) pushTvMailboxToCloud(); else pushMobileMailboxToCloud(); }
+        }
+
+        function openTeacherLoginModal() {
+            document.getElementById('teacher-pin-modal-input').value = '';
+            document.getElementById('teacher-login-modal').style.display = 'flex';
+            setTimeout(() => document.getElementById('teacher-pin-modal-input').focus(), 50);
+        }
+
+        async function verifyTeacherStep1() {
+            const inputEl = document.getElementById('teacher-pin-modal-input'), pass = inputEl.value.trim();
+            if (!pass) { showToast('⚠️ 請輸入教師專屬通行碼！'); return; }
+            showToast('☁️ 正在驗證通行碼與查詢額度...');
+            try {
+                const res = await fetch(getGasUrl(), { method: 'POST', credentials: 'omit', redirect: 'follow', headers: { 'Content-Type': 'text/plain;charset=utf-8' }, body: JSON.stringify({ action: "verifyTeacherPass", teacherPass: pass }) });
+                const data = await res.json();
+                if (data && data.status === 'success' && data.user) {
+                    adminSession.teacherPass = data.user.passCode; adminSession.teacherName = data.user.name;
+                    adminSession.isSuperAdmin = !!data.user.isSuperAdmin; adminSession.myRooms = data.myRooms || [];
+                    adminSession.remainingQuota = data.remainingQuota; adminSession.maxQuota = data.user.maxQuota || 5;
+                    document.getElementById('teacher-login-modal').style.display = 'none';
+                    openTeacherRoomModal();
+                } else { showToast(data.message || '❌ 通行碼無效！'); inputEl.value = ''; inputEl.focus(); }
+            } catch (e) { showToast('❌ 驗證連線失敗'); }
+        }
+
+        function openTeacherRoomModal() {
+            const modal = document.getElementById('teacher-room-modal');
+            modal.style.display = 'flex';
+            document.getElementById('create-room-pin-input').value = '';
+            document.getElementById('maintain-room-pin-input').value = '';
+            let banner = document.getElementById('teacher-quota-status-banner');
+            if (!banner) {
+                banner = document.createElement('div'); banner.id = 'teacher-quota-status-banner';
+                banner.style.cssText = 'background:#eef6ff; border:2px solid #0984e3; border-radius:10px; padding:10px 12px; margin-bottom:12px; text-align:left; font-size:13px; line-height:1.5;';
+                modal.querySelector('.small-modal-card h2').insertAdjacentElement('afterend', banner);
+            }
+            const rem = adminSession.remainingQuota !== undefined ? adminSession.remainingQuota : 5, maxQ = adminSession.maxQuota || 5, myRooms = adminSession.myRooms || [];
+            const myRoomsHtml = myRooms.length > 0
+                ? `<div style="margin-top:6px; padding-top:6px; border-top:1px dashed #74b9ff;"><b>📂 已建立代碼（點擊免密碼進入）：</b><br>${myRooms.map(r => `<span class="suggest-chip" style="background:#fff3cd; border-color:#f39c12; color:#d35400;" onclick="quickEnterMyRoom('${r.roomCode}')">🔑 ${r.roomCode} (${escapeHtml(r.title)})</span>`).join('')}</div>`
+                : '';
+            banner.innerHTML = `<div style="display:flex; justify-content:space-between; align-items:center;"><span>👋 <b>${escapeHtml(adminSession.teacherName || '老師')}</b> 您好！</span><span style="background:${rem > 0 ? '#00b894' : '#e74c3c'}; color:#fff; padding:2px 8px; border-radius:20px; font-weight:900; font-size:12px;">本遊戲剩餘額度：${rem} / ${maxQ} 組</span></div>${myRoomsHtml}`;
+
+            const createBtn = document.getElementById('btn-submit-create-room');
+            if (rem <= 0 && !adminSession.isSuperAdmin) {
+                if (createBtn) { createBtn.disabled = true; createBtn.textContent = '🛑 5 組額度已滿'; }
+                switchRoomModalMode('maintain');
+            } else {
+                if (createBtn) { createBtn.disabled = false; createBtn.textContent = '✨ 建立代碼並進入後台'; }
+                switchRoomModalMode('create'); fetchSuggestedCodes();
+            }
+        }
+
+        async function quickEnterMyRoom(code) {
+            document.getElementById('maintain-room-code-input').value = code;
+            document.getElementById('maintain-room-pin-input').value = '';
+            await submitMaintainRoom();
+        }
+
+        async function submitCreateRoom() {
+            const rawCode = document.getElementById('create-room-code-input').value.trim();
+            if (rawCode.length !== 5) { showToast('⚠️ 請輸入 5 位數字代碼！'); return; }
+            const code = rawCode.padStart(5, '0');
+            if (code === "00000") { showToast('⚠️ 00000 為系統公開挑戰榜！'); return; }
+            const pin = document.getElementById('create-room-pin-input').value.trim();
+            if (!pin) { showToast('⚠️ 請設定管理密碼！'); return; }
+            const defaultCfg = getDefaultParams();
+            showToast(`☁️ 正在建立代碼 [${code}]...`);
+            try {
+                const res = await fetch(getGasUrl(), { method: 'POST', credentials: 'omit', redirect: 'follow', headers: { 'Content-Type': 'text/plain;charset=utf-8' }, body: JSON.stringify({ action: "createNewRoom", roomCode: code, teacherPin: pin, teacherPass: adminSession.teacherPass || "", config: defaultCfg }) });
+                const data = await res.json();
+                if (data.status === 'success') { showToast(data.message); enterAdminDashboard(code, pin, !!adminSession.isSuperAdmin, defaultCfg); }
+                else showToast(data.message || '建立失敗');
+            } catch (e) { showToast('❌ 連線失敗'); }
+        }
+
+        async function submitMaintainRoom() {
+            const code = (document.getElementById('maintain-room-code-input').value.trim() || "00000").padStart(5, '0');
+            const pin = document.getElementById('maintain-room-pin-input').value.trim();
+            try {
+                const res = await fetch(getGasUrl(), { method: 'POST', credentials: 'omit', redirect: 'follow', headers: { 'Content-Type': 'text/plain;charset=utf-8' }, body: JSON.stringify({ action: "verifyRoomPin", roomCode: code, teacherPin: pin, teacherPass: adminSession.teacherPass || "" }) });
+                const data = await res.json();
+                if (data.status === 'success') {
+                    showToast(data.message);
+                    const loadedCfg = data.config ? Object.assign(getDefaultParams(), data.config) : getDefaultParams();
+                    enterAdminDashboard(code, pin, !!data.isSuperAdmin || !!adminSession.isSuperAdmin, loadedCfg);
+                } else showToast(data.message || '驗證失敗');
+            } catch (e) { showToast('❌ 驗證連線失敗'); }
+        }
+
+        function switchRoomModalMode(m) {
+            const isC = m === 'create';
+            document.getElementById('mode-tab-create').classList.toggle('active', isC);
+            document.getElementById('mode-tab-maintain').classList.toggle('active', !isC);
+            document.getElementById('room-modal-create-panel').style.display = isC ? 'block' : 'none';
+            document.getElementById('room-modal-maintain-panel').style.display = isC ? 'none' : 'block';
+        }
+
+        async function fetchSuggestedCodes() {
+            const container = document.getElementById('suggested-codes-container');
+            container.innerHTML = `<span style="font-size:12px; color:#7f8c8d;">☁️ 掃描中...</span>`;
+            try {
+                const res = await fetch(`${getGasUrl()}?action=getRecommendedCodes`), data = await res.json();
+                if (data && data.recommended && data.recommended.length) {
+                    container.innerHTML = data.recommended.map(c => `<span class="suggest-chip" onclick="document.getElementById('create-room-code-input').value='${c}'">✨ ${c}</span>`).join('');
+                    document.getElementById('create-room-code-input').value = data.recommended[0]; return;
+                }
+            } catch (e) {}
+            const fb = [1, 2, 3].map(() => String(Math.floor(Math.random() * 89999 + 10000)));
+            container.innerHTML = fb.map(c => `<span class="suggest-chip" onclick="document.getElementById('create-room-code-input').value='${c}'">✨ ${c}</span>`).join('');
+            document.getElementById('create-room-code-input').value = fb[0];
+        }
+
+        function enterAdminDashboard(code, pin, isSuperAdmin, cfg) {
+            document.getElementById('teacher-room-modal').style.display = 'none';
+            adminSession.roomCode = code; adminSession.roomPin = pin; adminSession.isSuperAdmin = isSuperAdmin;
+            params = cfg; params.tasks = normalizeTasksTo4Options(params.tasks);
+            if (!Array.isArray(params.classes) || !params.classes.length) params.classes = ["五年一班", "五年二班"];
+            document.getElementById('challenge-code').value = code; document.getElementById('tv-code-input').value = code;
+            document.getElementById('admin-active-code-badge').textContent = isSuperAdmin ? `👑 最高管理員：[${code}]` : `🔑 當前代碼：[${code}]`;
+            document.getElementById('task-panel-code-label').textContent = `[${code}]`;
+            document.getElementById('admin-tab-api').style.display = isSuperAdmin ? 'inline-flex' : 'none';
+            document.getElementById('set-title').value = params.title || "二位數乘法挑戰";
+            switchTab('admin'); switchAdminSubTab('tasks');
+            renderConfiguredClasses(); syncClassSelectDropdown(); renderSettingsTable(); renderCurrentQuestion(); fetchTeacherRecords();
+        }
+
+        function switchAdminSubTab(sub) {
+            ['records', 'tasks', 'api'].forEach(k => { const el = document.getElementById(`admin-sub-${k}`); if (el) el.style.display = (k === sub) ? 'block' : 'none'; });
+        }
+
+        function renderSettingsTable() {
+            const tbody = document.getElementById('settings-tbody'); if (!tbody) return;
+            tbody.innerHTML = (params.tasks || []).map((q, idx) => {
+                const opts = q.options || ["", "", "", ""], exp = q.explanation || "";
+                return `<tr>
+                    <td><input type="text" value="${escapeHtml(q.task)}" onchange="updateQuestionField(${idx}, 'task', this.value)"></td>
+                    <td><input type="text" value="${escapeHtml(opts[0])}" onchange="updateQuestionOpt(${idx}, 0, this.value)"></td>
+                    <td><input type="text" value="${escapeHtml(opts[1])}" onchange="updateQuestionOpt(${idx}, 1, this.value)"></td>
+                    <td><input type="text" value="${escapeHtml(opts[2])}" onchange="updateQuestionOpt(${idx}, 2, this.value)"></td>
+                    <td><input type="text" value="${escapeHtml(opts[3])}" onchange="updateQuestionOpt(${idx}, 3, this.value)"></td>
+                    <td><select onchange="updateQuestionField(${idx}, 'answer', Number(this.value))"><option value="1" ${q.answer === 1 ? 'selected' : ''}>● 1(A)</option><option value="2" ${q.answer === 2 ? 'selected' : ''}>●● 2(B)</option><option value="3" ${q.answer === 3 ? 'selected' : ''}>●●● 3(C)</option><option value="4" ${q.answer === 4 ? 'selected' : ''}>●●●● 4(D)</option></select></td>
+                    <td><input type="text" value="${escapeHtml(exp)}" onchange="updateQuestionField(${idx}, 'explanation', this.value)"></td>
+                    <td><button class="btn btn-red" style="padding:4px 7px; font-size:11px;" onclick="deleteQuestionRow(${idx})">刪除</button></td>
+                </tr>`;
+            }).join('');
+        }
+        function updateQuestionField(idx, field, val) { params.tasks[idx][field] = val; syncTaskCorrectWrong(params.tasks[idx]); }
+        function updateQuestionOpt(idx, optIdx, val) { params.tasks[idx].options[optIdx] = val; syncTaskCorrectWrong(params.tasks[idx]); }
+        function syncTaskCorrectWrong(qObj) { const ansIdx = (Number(qObj.answer) || 1) - 1; qObj.correct = [qObj.options[ansIdx]]; qObj.wrong = qObj.options.filter((_, i) => i !== ansIdx); }
+        function addQuestionRow() { params.tasks.push({ task: "新選擇題？", options: ["選項1", "選項2", "選項3", "選項4"], answer: 1, explanation: "", correct: ["選項1"], wrong: ["選項2", "選項3", "選項4"] }); renderSettingsTable(); }
+        function deleteQuestionRow(idx) { if (params.tasks.length <= 1) return; params.tasks.splice(idx, 1); renderSettingsTable(); }
+
+        function processQuickPaste() {
+            const raw = document.getElementById('quick-paste-textarea').value.trim(); if (!raw) return;
+            const lines = raw.split('\n').map(s => s.trim()).filter(Boolean), parsed = [], pipeLines = lines.filter(l => l.includes('|'));
+            if (pipeLines.length > 0) {
+                pipeLines.forEach(l => {
+                    const p = l.split('|').map(s => s.trim());
+                    if (p.length >= 6) { const qObj = { task: p[0], options: [p[1], p[2], p[3], p[4]], answer: Math.max(1, Math.min(4, parseInt(p[5]) || 1)), explanation: p[6] || "" }; syncTaskCorrectWrong(qObj); parsed.push(qObj); }
+                });
+            } else {
+                let cur = null;
+                lines.forEach(t => {
+                    if (t.startsWith('任務：') || t.startsWith('任務:')) { if (cur && cur.correct.length) parsed.push(cur); cur = { task: t.substring(3).trim(), correct: [], wrong: [], explanation: "" }; }
+                    else if ((t.startsWith('正確：') || t.startsWith('正確:')) && cur) cur.correct = t.substring(3).split(/[,，、]/).map(s => s.trim()).filter(Boolean);
+                    else if ((t.startsWith('錯誤：') || t.startsWith('錯誤:')) && cur) cur.wrong = t.substring(3).split(/[,，、]/).map(s => s.trim()).filter(Boolean);
+                    else if ((t.startsWith('解說：') || t.startsWith('解說:') || t.startsWith('解析：') || t.startsWith('解析:')) && cur) cur.explanation = t.substring(3).trim();
+                });
+                if (cur && cur.correct.length) parsed.push(cur);
+            }
+            if (parsed.length > 0) { params.tasks = normalizeTasksTo4Options(parsed); renderSettingsTable(); document.getElementById('quick-paste-textarea').value = ''; showToast(`✅ 成功解析 ${params.tasks.length} 題！`); }
+            else showToast('❌ 解析失敗，請檢查格式！');
+        }
+
+        async function saveRoomConfigToCloud() {
+            params.title = document.getElementById('set-title').value.trim() || "二位數乘法挑戰";
+            params.classSize = classSize; delete params.roomPin;
+            params.tasks.forEach(syncTaskCorrectWrong);
+            showToast(`☁️ 正在發布設定至代碼 [${adminSession.roomCode}]...`);
+            try {
+                const res = await fetch(getGasUrl(), { method: 'POST', headers: { 'Content-Type': 'text/plain;charset=utf-8' }, body: JSON.stringify({ action: "saveRoomConfig", roomCode: adminSession.roomCode, teacherPin: adminSession.roomPin, teacherPass: adminSession.teacherPass || "", config: params }) });
+                const data = await res.json();
+                if (!data || data.status !== 'success') { showToast((data && data.message) || '❌ 雲端儲存失敗'); return; }
+                showToast((data && data.message) || `✅ 已發布 [${adminSession.roomCode}] 設定！`);
+                syncClassSelectDropdown(); currentQIndex = 0; renderCurrentQuestion();
+            } catch (e) { showToast('❌ 雲端儲存失敗'); }
+        }
+
+        function unpackLogRecord(r) {
+            let rawRank = String(r.rankTitle || ""), topic = String(r.topicSummary || ""), wrong = String(r.wrongDetails || ""), className = "未分類班級", quizNo = "測驗一";
+            if (rawRank.includes("||")) {
+                const parts = rawRank.split("||"); rawRank = parts[0] || ""; if (!topic) topic = parts[1] || ""; if (!wrong || wrong === "無") wrong = parts[2] || "無";
+                if (parts[3]) className = parts[3]; if (parts[4]) quizNo = parts[4];
+            }
+            const cCnt = Number(r.correctCount) || 0, wCnt = Number(r.wrongCount) || 0, totalQ = cCnt + wCnt;
+            let finalScore = totalQ > 0 ? Math.round((cCnt / totalQ) * 100) : (Number(r.score) || 0);
+            return Object.assign({}, r, { score: finalScore, rankTitle: rawRank, topicSummary: topic || "舉牌逆轉王", wrongDetails: wrong || "全對無失誤", className, quizNo });
+        }
+
+        async function fetchTeacherRecords() {
+            const code = adminSession.roomCode, summaryEl = document.getElementById('admin-record-summary');
+            summaryEl.textContent = `☁️ 讀取 [${code}] 紀錄中...`;
+            try {
+                const res = await fetch(getGasUrl(), { method: 'POST', headers: { 'Content-Type': 'text/plain;charset=utf-8' }, body: JSON.stringify({ action: "getTeacherRecords", roomCode: code, teacherPin: adminSession.roomPin || "", teacherPass: adminSession.teacherPass || "" }) }), data = await res.json();
+                if (!data || data.status !== 'success') { summaryEl.textContent = (data && data.message) || '❌ 讀取失敗'; return; }
+                if (data && data.status === 'success') {
+                    const unpackedLogs = (data.allLogs || []).map(unpackLogRecord);
+                    cachedTeacherData = { roomCode: code, leaderboard: (data.leaderboard || []).map(unpackLogRecord), allLogs: unpackedLogs };
+                    populateAdminFilterDropdowns(unpackedLogs); renderTeacherTable();
+                }
+            } catch (e) { summaryEl.textContent = "❌ 連線失敗"; }
+        }
+
+        function populateAdminFilterDropdowns(logs) {
+            const cSet = new Set(Array.isArray(params.classes) ? params.classes : []), qSet = new Set(["測驗一"]);
+            logs.forEach(r => { if (r.className) cSet.add(r.className); if (r.quizNo) qSet.add(r.quizNo); });
+            document.getElementById('admin-filter-class').innerHTML = `<option value="ALL">全部任教班級 (${cSet.size}班)</option>` + Array.from(cSet).map(c => `<option value="${escapeHtml(c)}">${escapeHtml(c)}</option>`).join('');
+            document.getElementById('admin-filter-quiz').innerHTML = `<option value="ALL">全部測驗場次</option>` + Array.from(qSet).map(q => `<option value="${escapeHtml(q)}">${escapeHtml(q)}</option>`).join('');
+        }
+
+        function getFilteredAdminLogs() {
+            const fC = document.getElementById('admin-filter-class').value || 'ALL', fQ = document.getElementById('admin-filter-quiz').value || 'ALL';
+            return (cachedTeacherData.allLogs || []).filter(r => (fC === 'ALL' || r.className === fC) && (fQ === 'ALL' || r.quizNo === fQ));
+        }
+
+        function buildFilteredLeaderboard(filteredLogs) {
+            const map = {};
+            filteredLogs.forEach(r => {
+                const key = `${r.className}__${r.seatNo}`;
+                if (!map[key]) map[key] = Object.assign({}, r, { attempts: 1 });
+                else { map[key].attempts++; if (r.score > map[key].score) { const att = map[key].attempts; map[key] = Object.assign({}, r, { attempts: att }); } }
+            });
+            return Object.values(map);
+        }
+
+        function renderTeacherTable() {
+            const mode = document.getElementById('admin-view-mode').value, thead = document.getElementById('admin-records-thead'), tbody = document.getElementById('admin-records-tbody');
+            const filteredLogs = getFilteredAdminLogs(), filteredBoard = buildFilteredLeaderboard(filteredLogs);
+            document.getElementById('admin-record-summary').textContent = `符合學生 ${filteredBoard.length} 人 ｜ 紀錄 ${filteredLogs.length} 筆`;
+            if (mode === 'all_logs') {
+                thead.innerHTML = `<tr><th>序號</th><th>時間</th><th>班級</th><th>場次</th><th>座號</th><th>總分(百分制)</th><th>答對/錯</th><th>錯題診斷明細</th></tr>`;
+                tbody.innerHTML = filteredLogs.map((r, i) => `<tr><td>#${filteredLogs.length - i}</td><td>${escapeHtml(r.timestamp)}</td><td><b>${escapeHtml(r.className)}</b></td><td>${escapeHtml(r.quizNo)}</td><td><b>${escapeHtml(r.seatNo)}號</b></td><td style="color:#e74c3c;font-weight:900;">${r.score}</td><td>${r.correctCount}/${r.wrongCount}</td><td style="color:#c0392b;text-align:left;font-size:12px;">${escapeHtml(r.wrongDetails)}</td></tr>`).join('');
+            } else {
+                thead.innerHTML = `<tr><th>排序</th><th>班級</th><th>座號</th><th>最近場次</th><th>最高總分</th><th>答對/錯</th><th>次數</th><th>錯題診斷明細</th></tr>`;
+                let list = filteredBoard.slice();
+                if (mode === 'best_seat') list.sort((a, b) => a.className.localeCompare(b.className, 'zh-Hant') || (parseInt(a.seatNo) || 999) - (parseInt(b.seatNo) || 999));
+                else list.sort((a, b) => b.score - a.score);
+                tbody.innerHTML = list.map((r, i) => `<tr><td>${i + 1}</td><td><b>${escapeHtml(r.className)}</b></td><td style="color:#0984e3;font-weight:900;">${escapeHtml(r.seatNo)}號</td><td>${escapeHtml(r.quizNo)}</td><td style="color:#e74c3c;font-weight:900;">${r.score}</td><td>${r.correctCount}/${r.wrongCount}</td><td>${r.attempts} 次</td><td style="color:#c0392b;text-align:left;font-size:12px;">${escapeHtml(st ? st.wrongDetails : r.wrongDetails)}</td></tr>`.replace('st ? st.wrongDetails : ', '')).join('');
+            }
+        }
+
+        function openDiagnosticModal() {
+            const logs = getFilteredAdminLogs(), box = document.getElementById('diagnostic-report-content');
+            document.getElementById('diagnostic-modal').style.display = 'flex';
+            if (!logs.length) { box.innerHTML = `<div style="padding:20px;font-weight:bold;color:#7f8c8d;">目前篩選範圍尚無紀錄可供分析。</div>`; return; }
+            let totalC = 0, totalW = 0; const trapMap = {}, careList = [];
+            logs.forEach(r => {
+                totalC += Number(r.correctCount) || 0; totalW += Number(r.wrongCount) || 0;
+                const wStr = String(r.wrongDetails || "").trim();
+                if (wStr && wStr !== "無" && wStr !== "全對無失誤") wStr.split(/\s*,\s*/).filter(Boolean).forEach(it => { trapMap[it] = (trapMap[it] || 0) + 1; });
+                if (Number(r.wrongCount) > 0) careList.push(r);
+            });
+            const acc = (totalC + totalW) > 0 ? Math.round((totalC / (totalC + totalW)) * 100) : 100;
+            const sortedTraps = Object.keys(trapMap).map(k => ({ trap: k, count: trapMap[k] })).sort((a, b) => b.count - a.count).slice(0, 8);
+            careList.sort((a, b) => b.wrongCount - a.wrongCount);
+            box.innerHTML = `
+                <div class="diag-grid"><div class="diag-stat-card"><div>📊 整體答對率</div><div style="font-size:20px;font-weight:900;color:#00b894;">${acc}% (對${totalC}/錯${totalW})</div></div><div class="diag-stat-card"><div>👥 分析人次</div><div style="font-size:20px;font-weight:900;">${logs.length} 筆</div></div></div>
+                <div class="diag-section"><h4>🔥 常見誤選誘答選項 Top 8</h4>${sortedTraps.length === 0 ? '<div>🎉 全班零失誤！</div>' : `<table><thead><tr><th>排名</th><th>題目與誤選選項</th><th>次數</th></tr></thead><tbody>${sortedTraps.map((t, idx) => `<tr><td>Top ${idx+1}</td><td style="text-align:left;">${escapeHtml(t.trap)}</td><td>${t.count} 次</td></tr>`).join('')}</tbody></table>`}</div>
+                <div class="diag-section"><h4>🧑‍🏫 補救教學優先關懷名單</h4>${careList.length === 0 ? '<div>🎉 無需補救名單！</div>' : `<table><thead><tr><th>班級</th><th>座號</th><th>場次</th><th>答對/錯</th><th>個人錯題明細</th></tr></thead><tbody>${careList.slice(0, 15).map(st => `<tr><td>${escapeHtml(st.className)}</td><td>${escapeHtml(st.seatNo)}號</td><td>${escapeHtml(st.quizNo)}</td><td>${st.correctCount}/${st.wrongCount}</td><td style="text-align:left;color:#c0392b;">${escapeHtml(st.wrongDetails)}</td></tr>`).join('')}</tbody></table>`}</div>
+            `;
+        }
+
+        function exportRecordsCSV() {
+            const logs = getFilteredAdminLogs(); if (!logs.length) { showToast('⚠️ 無資料可匯出'); return; }
+            let csv = "\uFEFF時間,挑戰代碼,班級名稱,測驗場次,座號,總分(百分制),答對題數,答錯題數,單元名稱,錯題診斷明細\n";
+            logs.forEach(r => { csv += `"${r.timestamp}","'${r.roomCode}","${r.className}","${r.quizNo}","'${r.seatNo}",${r.score},${r.correctCount},${r.wrongCount},"${r.topicSummary}","${r.wrongDetails}"\n`; });
+            const a = document.createElement('a'); a.href = URL.createObjectURL(new Blob([csv], { type: 'text/csv;charset=utf-8;' }));
+            a.download = `舉牌逆轉王_${cachedTeacherData.roomCode}_成績冊.csv`; a.click();
+        }
+
+        async function executeClearRoomRecords() {
+            if (!confirm(`確定要永久清空代碼 [${adminSession.roomCode}] 的所有成績紀錄嗎？`)) return;
+            try {
+                const res = await fetch(getGasUrl(), { method: 'POST', headers: { 'Content-Type': 'text/plain;charset=utf-8' }, body: JSON.stringify({ action: "clearRoomScores", roomCode: adminSession.roomCode, teacherPin: adminSession.roomPin || "", teacherPass: adminSession.teacherPass || "" }) });
+                const data = await res.json();
+                showToast((data && data.message) || '❌ 清空失敗');
+                if (data && data.status === 'success') fetchTeacherRecords();
+            } catch (e) { showToast('❌ 連線失敗，紀錄未清空'); }
+        }
+
+        function switchTab(tab) {
+            ['tv', 'scan', 'wall', 'admin'].forEach(t => {
+                const b = document.getElementById(`tab-${t}`), p = document.getElementById(`panel-${t}`);
+                if (b) b.classList.toggle('active', t === tab);
+                if (p) p.classList.toggle('active', t === tab);
+            });
+            if (tab === 'tv') { startTvPolling(); stopMobilePolling(); }
+            else if (tab === 'scan') { stopTvPolling(); if (isMobilePaired) startMobilePolling(); }
+            else { stopTvPolling(); stopMobilePolling(); }
+            updateSyncStatusLightsUI();
+        }
+
+        function escapeHtml(str) { return String(str || '').replace(/[&<>"']/g, s => ({ '&': '&amp;', '<': '&lt;', '>': '&gt;', '"': '&quot;', "'": '&#39;' }[s])); }
+
+        window.onload = function() {
+            checkIframeEnvironment();
+            document.getElementById('gas-url-input').value = getGasUrl();
+            document.getElementById('site-url-input').value = getSiteUrl();
+
+            // 點擊賽道畫布可快速測試隨機座號點火就緒
+            const trackCv = document.getElementById('race-track-canvas');
+            if (trackCv) {
+                trackCv.onclick = function() {
+                    if (isCurrentQuestionLocked()) return;
+                    const randSeat = Math.floor(Math.random() * classSize) + 1;
+                    cycleSeatAnswer(randSeat);
+                };
+            }
+
+            initClassBuilderUI(); syncClassSelectDropdown(); updateClassSize(28, true);
+            renderCurrentQuestion(); initWallStage(); renderSettingsTable();
+            requestAnimationFrame(drawRaceTrackFrame);
+
+            if (isMobileOrTabletDevice()) switchTab('scan');
+            else { switchTab('tv'); generateNewTvPairCode(); }
+        };
+    </script>
+</body>
+</html>
