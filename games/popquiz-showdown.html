@@ -3,7 +3,7 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no, viewport-fit=cover">
-    <title>舉牌逆轉王 PopQuiz Showdown! [v1.2.3 極速賽道超車版]</title>
+    <title>舉牌逆轉王 PopQuiz Showdown! [v1.3 極速賽道超車版]</title>
     <style>
         * { box-sizing: border-box; -webkit-tap-highlight-color: transparent; }
         body, html { margin: 0; padding: 0; width: 100%; background: #0b1120; color: #2c3e50; font-family: 'Segoe UI', 'Microsoft JhengHei', sans-serif; overflow-x: hidden; }
@@ -259,7 +259,7 @@
 
     <!-- 導覽列精簡為 4 大核心功能，版本標示 v1.2 -->
     <div class="navbar">
-        <h1>🏎️ 舉牌逆轉王 PopQuiz Showdown! <span class="ver-badge">v1.2</span></h1>
+        <h1>🏎️ 舉牌逆轉王 PopQuiz Showdown! <span class="ver-badge">v1.3</span></h1>
         <div class="nav-tabs">
             <button id="tab-tv" class="tab-btn active" onclick="switchTab('tv')">📺 1. 極速賽道大電視</button>
             <button id="tab-scan" class="tab-btn" onclick="switchTab('scan')">📱 2. 手機掃描遙控端</button>
@@ -723,7 +723,7 @@
 
     <script>
         const GAME_LABEL = '逆轉王';
-        const APP_VERSION = "v1.2.3";
+        const APP_VERSION = "v1.3";
         const DEFAULT_GAS_URL = "https://script.google.com/macros/s/AKfycbwldbgt8JrFwbP4GbaMR-ICgWrdY6N7flmilKvXOI-rudwwfLUMu3b5NCL-KWofiL85/exec";
         const DEFAULT_SITE_URL = "https://sites.google.com/view/linyuchi/snap%E8%88%89%E7%89%8C%E4%BA%92%E5%8B%95%E6%8C%91%E6%88%B0%E5%8D%80/PopQuiz";
 
@@ -2738,5 +2738,509 @@
         })();
 
     </script>
+<!-- SNAP-UI:BEGIN -->
+<style id="snap-ui-style">
+/* =====================================================================
+   Snap UI 共用介面層（逆轉王／攀岩王／甜點派對）
+   只負責版面：把老師按鈕收進底部工具列、大電視填滿螢幕、手機改成單手操作。
+   不改任何遊戲邏輯；各遊戲以 --snapui-accent 指定主題色。
+   ===================================================================== */
+:root {
+  --snapui-accent: #f59e0b;
+  --snapui-accent-ink: #1f1300;
+  --snapui-bar-bg: rgba(10, 16, 32, 0.94);
+  --snapui-line: rgba(255, 255, 255, 0.14);
+  --snapui-muted: #94a3b8;
+  --snapui-head: 52px;
+  --snapui-radius: 10px;
+}
+
+/* ---------- 頂部導覽列：變細 ---------- */
+.navbar { padding-top: 6px !important; padding-bottom: 6px !important; min-height: 0 !important; }
+.navbar .tab-btn { padding: 6px 12px !important; font-size: 13px !important; border-radius: 999px !important; white-space: nowrap; }
+
+/* ---------- 大電視：填滿螢幕 ---------- */
+#panel-tv { max-width: none !important; padding: 6px 8px !important; }
+#tv-fullscreen-box {
+  height: calc(100vh - var(--snapui-head) - 12px) !important;
+  min-height: 0 !important; max-height: none !important;
+  display: flex !important; flex-direction: column !important;
+  padding-bottom: 0 !important; gap: 8px !important;
+}
+#tv-fullscreen-box:fullscreen { height: 100vh !important; border-radius: 0 !important; border-width: 0 !important; }
+#tv-quiz-view { flex: 1 1 auto !important; min-height: 0 !important; height: auto !important; }
+.snapui-hidden { display: none !important; }
+
+/* 題目字放大，教室後排也看得清楚 */
+.tv-left-question .tv-q-title { font-size: clamp(30px, 2.6vw, 58px) !important; line-height: 1.3 !important; }
+/* 攀岩王：題目在左欄垂直置中，不再上下各空一大段 */
+.tv-left-column .tv-left-question { display: flex !important; flex-direction: column !important; }
+.tv-left-column .tv-left-question > div:first-child { flex: 1 1 auto; display: flex; flex-direction: column; min-height: 0; }
+.tv-left-column .tv-left-question > div:first-child > .tv-q-title { margin-top: auto !important; margin-bottom: auto !important; }
+/* 甜點派對：右側出菜牆在矮螢幕上縮小而不被切掉 */
+.tv-right-seats { min-height: 0 !important; overflow: hidden !important; display: flex !important; flex-direction: column !important; }
+.tv-right-seats > div { display: flex; flex-direction: column; min-height: 0; flex: 1 1 auto; }
+.tv-right-seats #tv-seat-grid.tv-seat-grid { flex: 1 1 auto; min-height: 0; grid-auto-rows: minmax(0, 1fr); align-content: stretch; }
+.tv-right-seats #tv-seat-grid.tv-seat-grid > * { min-height: 0; overflow: hidden; font-size: clamp(10px, 0.78vw, 15px) !important; padding-top: 0 !important; padding-bottom: 0 !important; display: flex; flex-direction: column; justify-content: center; }
+/* 逆轉王：右側座號格填滿可用高度 */
+.tv-admin-deck { display: flex !important; flex-direction: column !important; min-height: 0 !important; }
+.tv-admin-deck #tv-seat-grid { flex: 1 1 auto; align-content: stretch; grid-auto-rows: minmax(26px, 1fr); min-height: 0; }
+.tv-admin-deck #tv-seat-grid .mini-seat-chip { font-size: clamp(13px, 0.95vw, 18px) !important; height: auto !important; display: flex; align-items: center; justify-content: center; }
+
+/* 矮螢幕（例如 1366×768 投影機）：出菜牆只顯示座號，作答狀態用顏色表示 */
+@media (max-height: 900px) {
+  .tv-right-seats #tv-seat-grid .seat-cell br, .tv-right-seats #tv-seat-grid .seat-cell > span { display: none !important; }
+  .tv-right-seats #tv-seat-grid .seat-cell { font-size: 13px !important; }
+}
+
+/* 畫布依實際尺寸繪製，不再被拉伸 */
+.snapui-fit-canvas { width: 100% !important; height: 100% !important; display: block; }
+.snapui-fit-host { display: flex !important; flex-direction: column !important; min-height: 0 !important; }
+.snapui-fit-host > .snapui-fit-canvas { flex: 1 1 auto; min-height: 0; }
+
+/* ---------- 老師工具列 ---------- */
+.snapui-toolbar {
+  flex: none; position: relative; z-index: 60;
+  display: flex; align-items: center; gap: 10px; flex-wrap: wrap; row-gap: 6px;
+  margin: 0 -14px; padding: 8px 14px; min-width: 0;
+  background: var(--snapui-bar-bg);
+  border-top: 1px solid var(--snapui-line);
+  backdrop-filter: blur(6px);
+  font-family: inherit; color: #e2e8f0;
+}
+.snapui-group { display: flex; align-items: center; gap: 6px; padding-right: 10px; border-right: 1px solid var(--snapui-line); min-width: 0; flex: 0 1 auto; }
+.snapui-group.snapui-g-nav, .snapui-group.snapui-g-sys { flex: none; }
+.snapui-group:last-child { border-right: 0; padding-right: 0; }
+.snapui-group.snapui-g-nav { margin-left: auto; margin-right: auto; border-right: 0; }
+.snapui-label { font-size: 11px; font-weight: 700; color: var(--snapui-muted); letter-spacing: 0.04em; white-space: nowrap; }
+
+.snapui-toolbar .btn:not(.btn-fever), .snapui-toolbar .snapui-btn {
+  display: inline-flex !important; align-items: center; justify-content: center; gap: 4px;
+  height: 36px; padding: 0 12px !important; margin: 0 !important;
+  border-radius: var(--snapui-radius) !important;
+  background: rgba(255, 255, 255, 0.08) !important; color: #f1f5f9 !important;
+  border: 1px solid var(--snapui-line) !important; box-shadow: none !important;
+  font-size: 14px !important; font-weight: 700 !important; line-height: 1 !important;
+  white-space: nowrap; cursor: pointer; transition: background 0.12s, transform 0.08s;
+  flex: none !important; width: auto !important;
+}
+.snapui-toolbar .btn-fever { height: 36px; padding: 0 12px !important; margin: 0 !important; border-radius: var(--snapui-radius) !important; font-size: 14px !important; flex: none !important; }
+.snapui-toolbar .btn:not(.btn-fever):hover, .snapui-toolbar .snapui-btn:hover { background: rgba(255, 255, 255, 0.18) !important; }
+.snapui-toolbar .btn:active, .snapui-toolbar .snapui-btn:active { transform: translateY(1px); }
+.snapui-toolbar .btn.snapui-primary {
+  height: 44px; padding: 0 26px !important; font-size: 17px !important;
+  background: var(--snapui-accent) !important; color: var(--snapui-accent-ink) !important; border-color: transparent !important;
+  box-shadow: 0 0 0 3px rgba(255, 255, 255, 0.06), 0 6px 18px rgba(0, 0, 0, 0.35) !important;
+}
+.snapui-toolbar .btn.snapui-primary:hover { filter: brightness(1.08); }
+.snapui-toolbar .btn.snapui-step { height: 44px; min-width: 104px; font-size: 15px !important; }
+
+.snapui-toolbar input.input-code, .snapui-toolbar select {
+  height: 36px !important; box-sizing: border-box; margin: 0 !important;
+  background: #0b1220 !important; color: #fff !important;
+  border: 1px solid var(--snapui-line) !important; border-radius: var(--snapui-radius) !important;
+  font-size: 15px !important; font-weight: 700; padding: 0 10px !important;
+}
+.snapui-toolbar input.input-code { width: 86px !important; text-align: center; letter-spacing: 0.08em; }
+.snapui-toolbar .auto-quiz-badge {
+  height: 36px; display: inline-flex !important; align-items: center; box-sizing: border-box;
+  padding: 0 10px !important; margin: 0 !important; border-radius: var(--snapui-radius) !important; font-size: 13px !important; white-space: nowrap;
+  max-width: 124px; overflow: hidden; text-overflow: ellipsis; flex: 0 1 auto;
+}
+.snapui-toolbar .tv-pair-digits {
+  font-size: 22px !important; font-weight: 900 !important; letter-spacing: 0.12em; color: #fde047 !important;
+  font-variant-numeric: tabular-nums; margin: 0 4px !important;
+}
+.snapui-toolbar .sync-status-pill {
+  height: 36px; display: inline-flex !important; align-items: center; box-sizing: border-box;
+  max-width: 200px; min-width: 64px; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; display: block !important; line-height: 34px;
+  padding: 0 12px !important; margin: 0 !important; font-size: 13px !important; border-radius: 999px !important; flex: 0 1 auto !important;
+}
+
+/* 收起狀態：只留右下角小按鈕 */
+.snapui-collapsed .snapui-toolbar { display: none; }
+.snapui-handle {
+  position: absolute; right: 14px; bottom: 12px; z-index: 70; display: none;
+  height: 34px; padding: 0 14px; border-radius: 999px; cursor: pointer;
+  background: rgba(10, 16, 32, 0.55); color: rgba(255, 255, 255, 0.75);
+  border: 1px solid rgba(255, 255, 255, 0.2); font: 700 13px/1 inherit;
+  opacity: 0.45; transition: opacity 0.15s;
+}
+.snapui-handle:hover { opacity: 1; }
+.snapui-collapsed .snapui-handle { display: inline-flex; align-items: center; gap: 6px; }
+
+/* 鍵盤說明 */
+.snapui-keys {
+  position: absolute; right: 14px; bottom: 70px; z-index: 80; display: none;
+  background: rgba(10, 16, 32, 0.96); color: #e2e8f0; border: 1px solid var(--snapui-line);
+  border-radius: 14px; padding: 14px 18px; font-size: 14px; line-height: 1.9; box-shadow: 0 12px 30px rgba(0, 0, 0, 0.5);
+}
+.snapui-keys.open { display: block; }
+.snapui-keys kbd {
+  display: inline-block; min-width: 22px; padding: 0 6px; margin-right: 6px; text-align: center;
+  border-radius: 6px; background: rgba(255, 255, 255, 0.12); border: 1px solid var(--snapui-line); font: 700 12px/20px inherit;
+}
+
+@media (max-width: 2000px) {
+  .snapui-label { display: none; }
+}
+@media (max-width: 1700px) {
+  .snapui-toolbar { gap: 8px; }
+  .snapui-group { padding-right: 8px; gap: 5px; }
+  .snapui-toolbar .btn:not(.btn-fever), .snapui-toolbar .snapui-btn { padding: 0 9px !important; font-size: 13px !important; }
+  .snapui-toolbar .btn.snapui-step { min-width: 84px; }
+}
+@media (max-width: 1400px) {
+  .snapui-toolbar .btn.snapui-primary { padding: 0 18px !important; font-size: 15px !important; }
+  .snapui-toolbar .sync-status-pill { max-width: 180px; }
+}
+
+/* =====================================================================
+   手機遙控端
+   ===================================================================== */
+.snapui-mobile-bar { display: none; }
+@media (max-width: 820px) {
+  .navbar { flex-wrap: nowrap !important; gap: 8px !important; padding: 6px 10px !important; }
+  .navbar h1 { flex: none; font-size: 15px !important; white-space: nowrap; margin: 0 !important; }
+  .navbar h1 .ver-badge { font-size: 10px !important; }
+  .navbar .nav-tabs { flex-wrap: nowrap !important; overflow-x: auto; -webkit-overflow-scrolling: touch; scrollbar-width: none; }
+  .navbar .nav-tabs::-webkit-scrollbar { display: none; }
+  .navbar .tab-btn { padding: 5px 10px !important; font-size: 12px !important; }
+
+  #panel-scan { padding: 8px !important; }
+  #panel-scan .btn { min-height: 40px; }
+
+  /* 已連線後，配對區縮成一行狀態列 */
+  .snapui-connected #mobile-pair-banner { padding: 10px 12px !important; margin-bottom: 8px !important; }
+  .snapui-connected #mobile-pair-banner #mobile-pair-desc,
+  .snapui-connected #mobile-pair-banner:not(.snapui-open) > div:nth-child(2) { display: none !important; }
+  .snapui-connected #mobile-pair-title { font-size: 14px !important; margin: 0 !important; }
+  .snapui-gate-toggle { display: none; }
+  .snapui-connected .snapui-gate-toggle {
+    display: inline-block; margin-top: 6px; padding: 4px 10px; border-radius: 999px;
+    border: 1px solid rgba(0, 0, 0, 0.15); background: rgba(255, 255, 255, 0.7); font-size: 12px; font-weight: 700; cursor: pointer;
+  }
+
+  /* 題庫與設定：可收合 */
+  .snapui-settings-toggle {
+    display: flex; justify-content: space-between; align-items: center; width: 100%;
+    padding: 10px 12px; margin: 0 0 8px; border-radius: 12px; border: 1px solid #dbe3ee;
+    background: #f8fafc; color: #0f172a; font-size: 15px; font-weight: 800; cursor: pointer;
+  }
+  .snapui-settings-collapsed .quiz-bar { display: none !important; }
+
+  /* 底部固定操作列已經有上一題／公布／下一題，題目卡裡的同一組按鈕就不重複顯示 */
+  .snapui-has-mobile-bar .snapui-dup { display: none !important; }
+  .snapui-has-mobile-bar #panel-scan { padding-bottom: calc(96px + env(safe-area-inset-bottom)) !important; }
+
+  .snapui-mobile-bar.show {
+    display: grid; grid-template-columns: 1fr 1.7fr 1fr 1fr; gap: 8px;
+    position: fixed; left: 0; right: 0; bottom: 0; z-index: 9000;
+    padding: 10px 10px calc(10px + env(safe-area-inset-bottom));
+    background: rgba(255, 255, 255, 0.96); border-top: 1px solid #e2e8f0;
+    box-shadow: 0 -8px 24px rgba(15, 23, 42, 0.12); backdrop-filter: blur(8px);
+  }
+  .snapui-mobile-bar button {
+    height: 56px; border-radius: 14px; border: 1px solid #dbe3ee; background: #f1f5f9; color: #0f172a;
+    font-size: 15px; font-weight: 800; display: flex; flex-direction: column; align-items: center; justify-content: center; gap: 2px;
+    -webkit-tap-highlight-color: transparent; cursor: pointer;
+  }
+  .snapui-mobile-bar button small { font-size: 11px; font-weight: 700; opacity: 0.7; }
+  .snapui-mobile-bar button:active { transform: scale(0.97); }
+  .snapui-mobile-bar .snapui-m-reveal { background: var(--snapui-accent); color: var(--snapui-accent-ink); border-color: transparent; font-size: 17px; }
+  .snapui-mobile-bar .snapui-m-cam.on { background: #dc2626; color: #fff; border-color: transparent; }
+  .snapui-mobile-bar .snapui-m-cam.off { background: #16a34a; color: #fff; border-color: transparent; }
+
+  .snapui-upload-row { margin-top: 12px; }
+  .snapui-upload-row .btn { width: 100%; min-height: 48px; font-size: 16px !important; }
+}
+
+/* =====================================================================
+   教師後台
+   ===================================================================== */
+#panel-admin { max-width: 1280px !important; }
+#panel-admin .admin-box { border-radius: 16px !important; box-shadow: 0 6px 20px rgba(15, 23, 42, 0.08) !important; }
+#panel-admin table { border-collapse: separate; border-spacing: 0; }
+#panel-admin table th { position: sticky; top: 0; z-index: 1; }
+#panel-admin table tbody tr:nth-child(even) td { background-color: rgba(148, 163, 184, 0.08); }
+#panel-admin table tbody tr:hover td { background-color: rgba(59, 130, 246, 0.08); }
+#panel-admin input[type="text"], #panel-admin input[type="password"], #panel-admin input:not([type]), #panel-admin select, #panel-admin textarea {
+  border-radius: 10px; border: 1px solid #cbd5e1; padding: 8px 10px; font-size: 15px; box-sizing: border-box;
+}
+#panel-admin input:focus, #panel-admin select:focus, #panel-admin textarea:focus { outline: 3px solid rgba(59, 130, 246, 0.25); border-color: #3b82f6; }
+#panel-admin .btn { border-radius: 10px !important; }
+
+</style>
+<script>window.SNAPUI_CONFIG = {"game": "showdown", "accent": "#f97316", "accentInk": "#1c0a00", "canvases": [{"sel": "#race-track-canvas", "minHeight": 320}]};</script>
+<script id="snap-ui-script">
+/* =====================================================================
+   Snap UI 共用介面層（逆轉王／攀岩王／甜點派對）
+   - 把大電視上的老師按鈕「搬」進底部工具列（元素本身與 onclick 完全不變）
+   - 工具列可一鍵收起；支援簡報遙控器與鍵盤
+   - 手機遙控端：底部固定操作列、連線後配對區縮小、設定區可收合
+   設定：window.SNAPUI_CONFIG = { game, accent, accentInk, canvases: [選擇器] }
+   ===================================================================== */
+(function () {
+  'use strict';
+  const CFG = window.SNAPUI_CONFIG || {};
+  const GAME = CFG.game || 'snap';
+  const store = {
+    get(k) { try { return localStorage.getItem('SNAPUI_' + GAME + '_' + k); } catch (e) { return null; } },
+    set(k, v) { try { localStorage.setItem('SNAPUI_' + GAME + '_' + k, v); } catch (e) {} }
+  };
+  const norm = s => String(s || '').replace(/\s+/g, '');
+  function byClick(root, call, nth) {
+    const list = Array.from((root || document).querySelectorAll('[onclick]')).filter(el => norm(el.getAttribute('onclick')) === norm(call));
+    return list[nth || 0] || null;
+  }
+  function el(tag, cls, html) { const e = document.createElement(tag); if (cls) e.className = cls; if (html != null) e.innerHTML = html; return e; }
+  function readGlobal(name) { try { return (0, eval)('typeof ' + name + ' !== "undefined" ? ' + name + ' : undefined'); } catch (e) { return undefined; } }
+  function visible(node) { return !!node && node.offsetParent !== null; }
+
+  if (CFG.accent) document.documentElement.style.setProperty('--snapui-accent', CFG.accent);
+  if (CFG.accentInk) document.documentElement.style.setProperty('--snapui-accent-ink', CFG.accentInk);
+
+  // ------------------------------------------------------------------
+  // 大電視：底部老師工具列
+  // ------------------------------------------------------------------
+  function buildTvToolbar() {
+    const panel = document.getElementById('panel-tv');
+    const box = document.getElementById('tv-fullscreen-box');
+    if (!panel || !box || document.getElementById('snapui-toolbar')) return;
+
+    const pick = {
+      code: document.getElementById('tv-code-input'),
+      load: byClick(panel, 'loadCloudQuizFromTv()'),
+      cls: document.getElementById('tv-class-select'),
+      quizNo: document.getElementById('tv-auto-quiz-badge'),
+      pair: document.getElementById('tv-pair-display'),
+      qr: byClick(panel, 'openTvQrPairModal()'),
+      newPair: byClick(panel, 'generateNewTvPairCode()'),
+      conn: document.getElementById('tv-connection-pill'),
+      mask: byClick(panel, 'toggleTvMaskMode()'),
+      exp: byClick(panel, 'toggleExplanationMode()'),
+      fever: byClick(panel, "toggleFeverRound('TV')"),
+      board: byClick(panel, 'toggleRightBoardMode()'),
+      summary: byClick(panel, 'toggleTvSummaryView()'),
+      prev: byClick(panel, "stepQuestion(-1, 'TV')"),
+      reveal: byClick(panel, "revealCurrentAnswer('TV')"),
+      next: byClick(panel, "stepQuestion(1, 'TV')"),
+      full: byClick(panel, 'toggleTvFullscreen()')
+    };
+    const formerParents = new Set();
+    Object.values(pick).forEach(n => { if (n && n.parentElement) formerParents.add(n.parentElement); });
+
+    const bar = el('div', 'snapui-toolbar'); bar.id = 'snapui-toolbar';
+    const group = (cls, label, nodes) => {
+      const g = el('div', 'snapui-group ' + cls);
+      if (label) g.appendChild(el('span', 'snapui-label', label));
+      nodes.filter(Boolean).forEach(n => {
+        if (n.tagName === 'BUTTON') { n.removeAttribute('style'); n.classList.remove('btn-blue', 'btn-orange', 'btn-green', 'btn-purple'); n.removeAttribute('title'); }
+        else if (n.style) { n.style.removeProperty('width'); n.style.removeProperty('padding'); n.style.removeProperty('font-size'); n.style.removeProperty('margin-left'); n.style.removeProperty('flex'); }
+        g.appendChild(n);
+      });
+      return g;
+    };
+    if (pick.qr) pick.qr.textContent = '📱 QR';
+    if (pick.newPair) pick.newPair.textContent = '🔄';
+    if (pick.newPair) pick.newPair.title = '換一組配對碼';
+    if (pick.load) pick.load.textContent = '載入';
+    if (pick.full) pick.full.textContent = '⛶';
+    if (pick.full) pick.full.title = '全螢幕（F）';
+    if (pick.prev) { pick.prev.textContent = '◀ 上一題'; pick.prev.classList.add('snapui-step'); }
+    if (pick.next) { pick.next.textContent = '下一題 ▶'; pick.next.classList.add('snapui-step'); }
+    if (pick.reveal) { pick.reveal.classList.add('snapui-primary'); pick.reveal.title = '公布正解（空白鍵）'; }
+
+    bar.appendChild(group('snapui-g-quiz', '題庫', [pick.code, pick.load, pick.cls, pick.quizNo]));
+    bar.appendChild(group('snapui-g-pair', '手機配對', [pick.pair, pick.qr, pick.newPair, pick.conn]));
+    bar.appendChild(group('snapui-g-nav', '', [pick.prev, pick.reveal, pick.next]));
+    bar.appendChild(group('snapui-g-view', '顯示', [pick.mask, pick.exp, pick.fever, pick.board, pick.summary]));
+    const sys = group('snapui-g-sys', '', [pick.full]);
+    const keysBtn = el('button', 'snapui-btn', '?'); keysBtn.title = '鍵盤與簡報遙控器快捷鍵';
+    const hideBtn = el('button', 'snapui-btn', '▾'); hideBtn.title = '收起工具列（H）';
+    sys.appendChild(keysBtn); sys.appendChild(hideBtn);
+    bar.appendChild(sys);
+    box.appendChild(bar);
+
+    const handle = el('button', 'snapui-handle', '⚙ 老師工具 <span style="opacity:.6">H</span>');
+    box.appendChild(handle);
+    const keys = el('div', 'snapui-keys',
+      '<b>鍵盤／簡報遙控器</b><br>' +
+      '<kbd>→</kbd><kbd>PgDn</kbd>下一題<br>' +
+      '<kbd>←</kbd><kbd>PgUp</kbd>上一題<br>' +
+      '<kbd>空白</kbd><kbd>Enter</kbd><kbd>B</kbd>公布正解<br>' +
+      '<kbd>M</kbd>蓋牌　<kbd>E</kbd>解說　<kbd>S</kbd>總表<br>' +
+      '<kbd>H</kbd>收起／展開工具列　<kbd>F</kbd>全螢幕');
+    box.appendChild(keys);
+
+    // 搬走按鈕之後，原本只剩標籤文字的外框就隱藏起來
+    const hasControls = n => !!n.querySelector('[id], button, input, select, canvas, svg');
+    formerParents.forEach(p => {
+      let node = p;
+      for (let i = 0; i < 4 && node && node !== box && node.id !== 'tv-quiz-view'; i++) {
+        if (hasControls(node)) break;
+        node.classList.add('snapui-hidden');
+        node = node.parentElement;
+      }
+    });
+
+    const setCollapsed = c => { document.body.classList.toggle('snapui-collapsed', c); store.set('collapsed', c ? '1' : '0'); keys.classList.remove('open'); fitCanvasesSoon(); };
+    hideBtn.onclick = () => setCollapsed(true);
+    handle.onclick = () => setCollapsed(false);
+    keysBtn.onclick = () => keys.classList.toggle('open');
+    setCollapsed(store.get('collapsed') === '1');
+
+    // 按完工具列按鈕就移開焦點，避免空白鍵重複觸發
+    bar.addEventListener('click', e => { const b = e.target.closest('button'); if (b) setTimeout(() => b.blur(), 0); });
+
+    document.addEventListener('keydown', e => {
+      if (!panel.classList.contains('active')) return;
+      const t = e.target;
+      if (t && (t.tagName === 'INPUT' || t.tagName === 'SELECT' || t.tagName === 'TEXTAREA' || t.isContentEditable)) return;
+      if (e.ctrlKey || e.metaKey || e.altKey) return;
+      const k = e.key;
+      const press = n => { if (n) { e.preventDefault(); n.click(); } };
+      if (k === 'ArrowRight' || k === 'PageDown') press(pick.next);
+      else if (k === 'ArrowLeft' || k === 'PageUp') press(pick.prev);
+      else if ((k === ' ' || k === 'Enter') && !(t && t.tagName === 'BUTTON')) press(pick.reveal);
+      else if (k === 'b' || k === 'B' || k === '.') press(pick.reveal);
+      else if (k === 'm' || k === 'M') press(pick.mask);
+      else if (k === 'e' || k === 'E') press(pick.exp);
+      else if (k === 's' || k === 'S') press(pick.summary);
+      else if (k === 'f' || k === 'F') press(pick.full);
+      else if (k === 'h' || k === 'H') { e.preventDefault(); setCollapsed(!document.body.classList.contains('snapui-collapsed')); }
+      else if (k === '?') { e.preventDefault(); keys.classList.toggle('open'); }
+    });
+  }
+
+  // ------------------------------------------------------------------
+  // 畫布跟著顯示尺寸調整（遊戲每幀都讀 canvas.width / height 來排版）
+  // ------------------------------------------------------------------
+  const fitTargets = [];
+  function setupCanvasFit() {
+    (CFG.canvases || []).forEach(spec => {
+      const sel = typeof spec === 'string' ? spec : spec.sel;
+      const c = document.querySelector(sel);
+      if (!c) return;
+      c._snapuiMinH = (spec && spec.minHeight) || 0;
+      c.classList.add('snapui-fit-canvas');
+      if (c.parentElement) c.parentElement.classList.add('snapui-fit-host');
+      fitTargets.push(c);
+    });
+    if (!fitTargets.length) return;
+    const ro = window.ResizeObserver ? new ResizeObserver(fitCanvases) : null;
+    fitTargets.forEach(c => ro ? ro.observe(c) : null);
+    window.addEventListener('resize', fitCanvases);
+    fitCanvases();
+  }
+  function fitCanvases() {
+    fitTargets.forEach(c => {
+      // 矮螢幕時以較大的邏輯尺寸繪製再縮小顯示，避免固定大小的圖案（城堡等）擠在一起
+      let w = c.clientWidth, h = c.clientHeight;
+      if (w < 50 || h < 50) return;
+      const k = c._snapuiMinH && h < c._snapuiMinH ? c._snapuiMinH / h : 1;
+      w = Math.round(w * k); h = Math.round(h * k);
+      if (c.width !== w || c.height !== h) { c.width = w; c.height = h; }
+    });
+  }
+  function fitCanvasesSoon() { setTimeout(fitCanvases, 30); setTimeout(fitCanvases, 250); }
+
+  function measureHeader() {
+    const nav = document.querySelector('.navbar');
+    if (nav) document.documentElement.style.setProperty('--snapui-head', Math.ceil(nav.getBoundingClientRect().height) + 'px');
+  }
+
+  // ------------------------------------------------------------------
+  // 手機遙控端
+  // ------------------------------------------------------------------
+  function buildMobile() {
+    const panel = document.getElementById('panel-scan');
+    if (!panel) return;
+    const isPhone = () => window.matchMedia('(max-width: 820px)').matches;
+
+    const orig = {
+      prev: byClick(panel, "stepQuestion(-1, 'MOBILE')"),
+      reveal: byClick(panel, "revealCurrentAnswer('MOBILE')"),
+      next: byClick(panel, "stepQuestion(1, 'MOBILE')"),
+      start: document.getElementById('btn-start-cam'),
+      stop: document.getElementById('btn-stop-cam')
+    };
+    [orig.prev, orig.reveal, orig.next].forEach(b => b && b.classList.add('snapui-dup'));
+
+    const bar = el('div', 'snapui-mobile-bar');
+    const mk = (cls, html, fn) => { const b = el('button', cls, html); b.type = 'button'; b.onclick = fn; bar.appendChild(b); return b; };
+    mk('snapui-m-prev', '◀<small>上一題</small>', () => orig.prev && orig.prev.click());
+    mk('snapui-m-reveal', '公布正解', () => orig.reveal && orig.reveal.click());
+    mk('snapui-m-next', '▶<small>下一題</small>', () => orig.next && orig.next.click());
+    const cam = mk('snapui-m-cam off', '📷<small>開始掃描</small>', () => {
+      if (readGlobal('scanning')) { orig.stop && orig.stop.click(); } else { orig.start && orig.start.click(); }
+    });
+    document.body.appendChild(bar);
+
+    // 連線後的配對區：縮成一行，可再展開
+    const gate = document.getElementById('mobile-pair-banner');
+    if (gate && gate.firstElementChild) {
+      const t = el('button', 'snapui-gate-toggle', '更換連線方式');
+      t.type = 'button';
+      t.onclick = () => gate.classList.toggle('snapui-open');
+      gate.firstElementChild.appendChild(t);
+    }
+
+    // 題庫與設定：可收合（連線大電視時預設收起，題庫由大電視帶入）
+    const zone = document.getElementById('mobile-active-quiz-zone');
+    const quizBar = zone && zone.querySelector('.quiz-bar');
+    let settingsToggle = null;
+    if (quizBar) {
+      settingsToggle = el('button', 'snapui-settings-toggle', '<span>⚙️ 題庫與設定</span><span class="snapui-caret">▾</span>');
+      settingsToggle.type = 'button';
+      quizBar.parentElement.insertBefore(settingsToggle, quizBar);
+      settingsToggle.onclick = () => {
+        const c = !zone.classList.contains('snapui-settings-collapsed');
+        zone.classList.toggle('snapui-settings-collapsed', c);
+        store.set('mobSettings', c ? 'closed' : 'open');
+        settingsToggle.querySelector('.snapui-caret').textContent = c ? '▸' : '▾';
+      };
+      // 「結算並上傳」移到監控看板下方，收合設定時也找得到
+      const upload = byClick(quizBar, 'uploadClassSessionToGAS()');
+      const board = panel.querySelector('.board-card');
+      if (upload && board) { const row = el('div', 'snapui-upload-row'); upload.removeAttribute('style'); row.appendChild(upload); board.appendChild(row); }
+    }
+
+    let lastPaired = null;
+    setInterval(() => {
+      const paired = !!readGlobal('isMobilePaired');
+      const standalone = !!readGlobal('isStandaloneQuizMode');
+      const connected = paired || standalone;
+      document.body.classList.toggle('snapui-connected', connected);
+      if (zone && settingsToggle && paired !== lastPaired) {
+        const saved = store.get('mobSettings');
+        const collapse = saved ? saved === 'closed' : paired;
+        zone.classList.toggle('snapui-settings-collapsed', collapse);
+        settingsToggle.querySelector('.snapui-caret').textContent = collapse ? '▸' : '▾';
+        lastPaired = paired;
+      }
+      const show = isPhone() && panel.classList.contains('active') && visible(zone);
+      bar.classList.toggle('show', show);
+      document.body.classList.toggle('snapui-has-mobile-bar', show);
+      const on = !!readGlobal('scanning');
+      cam.classList.toggle('on', on); cam.classList.toggle('off', !on);
+      cam.innerHTML = on ? '⏹<small>停止掃描</small>' : '📷<small>開始掃描</small>';
+    }, 400);
+  }
+
+  function init() {
+    measureHeader();
+    buildTvToolbar();
+    setupCanvasFit();
+    buildMobile();
+    window.addEventListener('resize', measureHeader);
+    document.addEventListener('fullscreenchange', fitCanvasesSoon);
+    fitCanvasesSoon();
+  }
+  if (document.readyState === 'complete') init(); else window.addEventListener('load', () => setTimeout(init, 0));
+})();
+
+</script>
+<!-- SNAP-UI:END -->
 </body>
 </html>

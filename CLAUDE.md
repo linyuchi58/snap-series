@@ -10,7 +10,11 @@
 - `gas/Code.gs`：Google Apps Script 後端，各遊戲共用同一份程式。四款舉牌遊戲共用同一個部署（網址開頭 AKfycbwldbgt8JrF），同一個代碼四款通用，成績以 rankTitle 第 7 段（GAME_LABEL）區分遊戲。拖曳分類、泡泡拍打等其他遊戲有各自獨立的後端，不屬於本系列。
 - `tests/`：`node tests/code-gs.test.js`（後端，模擬 GAS）、`node tests/e2e-admin.test.js games/*.html` 、`node tests/e2e-phase2.test.js games/*.html`（瀏覽器端對端，含雙機同步）、`node tests/e2e-shared.test.js`（共用後端）。
   每次修改後兩個都要通過。
-- `tools/`：一次性修補腳本。
+- `ui/snap-ui.css`、`ui/snap-ui.js`：逆轉王、攀岩王、甜點派對共用的介面層（秒答樂不使用）。
+  改完執行 `python3 tools/build_ui.py`，它會把兩個檔案內嵌到三款 HTML 的 `<!-- SNAP-UI:BEGIN/END -->` 之間，並更新版號。
+  介面層只搬動與排版既有元素，以 `onclick` 字串與 id 找到按鈕，**不得**在這裡改遊戲邏輯；
+  遊戲 HTML 若改了這些按鈕的 onclick 寫法，介面層要跟著改。各遊戲設定（主題色、要自動調整尺寸的畫布）在 `build_ui.py`。
+- `tools/`：修補與建置腳本。
 
 ## 絕對不可破壞的設計（皆經真實教室實測定案）
 
