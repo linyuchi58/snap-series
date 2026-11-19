@@ -3,7 +3,7 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no, viewport-fit=cover">
-    <title>舉牌逆轉王 PopQuiz Showdown! [v1.2.1 極速賽道超車版]</title>
+    <title>舉牌逆轉王 PopQuiz Showdown! [v1.2.2 極速賽道超車版]</title>
     <style>
         * { box-sizing: border-box; -webkit-tap-highlight-color: transparent; }
         body, html { margin: 0; padding: 0; width: 100%; background: #0b1120; color: #2c3e50; font-family: 'Segoe UI', 'Microsoft JhengHei', sans-serif; overflow-x: hidden; }
@@ -421,7 +421,7 @@
                     <span id="mobile-auto-quiz-badge" class="auto-quiz-badge">📝 本場次：測驗一</span>
                     <div class="class-size-pill">
                         <span>👥 <strong id="lbl-class-size" style="color:#0984e3;">28</strong>人</span>
-                        <input type="range" id="slider-class-size" min="10" max="100" value="28" oninput="updateClassSize(this.value)" style="width:70px; cursor:pointer;">
+                        <input type="range" id="slider-class-size" min="1" max="100" value="28" oninput="updateClassSize(this.value)" style="width:70px; cursor:pointer;">
                     </div>
                 </div>
                 <div class="quiz-input-group">
@@ -589,7 +589,7 @@
                 </div>
                 <div style="display:flex; gap:12px; flex-wrap:wrap; align-items:center; margin-bottom:12px;">
                     <label style="font-weight:bold;">🏷️ 單元名稱：<input type="text" id="set-title" value="二位數乘法挑戰" style="padding:5px 8px; border-radius:6px; border:2px solid #bdc3c7; font-weight:bold; width:190px;"></label>
-                    <label style="font-weight:bold;">👥 預設班級人數：<input type="number" id="set-class-size" min="10" max="100" value="28" onchange="updateClassSize(this.value)" style="padding:5px 8px; border-radius:6px; border:2px solid #bdc3c7; font-weight:bold; width:70px;"></label>
+                    <label style="font-weight:bold;">👥 預設班級人數：<input type="number" id="set-class-size" min="1" max="100" value="28" onchange="updateClassSize(this.value)" style="padding:5px 8px; border-radius:6px; border:2px solid #bdc3c7; font-weight:bold; width:70px;"></label>
                 </div>
                 <div class="class-builder-box">
                     <h4 style="margin:0 0 6px 0; color:#1e3799; font-size:15px;">🏫 任教班級清單設定器</h4>
@@ -722,7 +722,7 @@
     </div>
 
     <script>
-        const APP_VERSION = "v1.2.1";
+        const APP_VERSION = "v1.2.2";
         const DEFAULT_GAS_URL = "https://script.google.com/macros/s/AKfycbzoaZ--EPlQJ49p8EtgKDH5cbNg4DA6YXiVvL2Q2vQMe69ubfVZc46-OVh2UIZgPg/exec";
         const DEFAULT_SITE_URL = "https://sites.google.com/view/linyuchi/snap%E8%88%89%E7%89%8C%E4%BA%92%E5%8B%95%E6%8C%91%E6%88%B0%E5%8D%80/PopQuiz";
 
@@ -749,6 +749,8 @@
 
         let tvSeqCounter = 0, lastSeenTvSeq = -1;
         let mobSeqCounter = 0, lastSeenMobSeq = -1;
+        const CLIENT_SESSION_ID = Math.random().toString(36).slice(2, 10);
+        let lastSeenMobSid = '', lastSeenTvSid = '';
 
         let questionAnswersMemory = {};
         let questionLockedState = {};
@@ -1225,8 +1227,32 @@
         }
 
         let tvPollTimer = null, mobilePollTimer = null, tvKnowsMobileConnected = false;
+        function pickOpticalSafePairCode() {
+
+            for (let attempt = 0; attempt < 500; attempt++) {
+
+                const s = String(Math.floor(1000 + Math.random() * 9000));
+
+                const code = encodePairCodeTo16Bits(s), dots = popcount16(code);
+
+                if (dots < 5 || dots > 11) continue;
+
+                let ok = true, r = code;
+
+                for (let k = 1; k < 4 && ok; k++) { r = rotate16BitsCW(r); const d = decode16BitsToPairCode(r); if (d && d !== s) ok = false; }
+
+                if (ok) ok = !MARKER_CODES.some(m => { let t = m; for (let k = 0; k < 4; k++) { if (t === code) return true; t = rotate16BitsCW(t); } return false; });
+
+                if (ok) return s;
+
+            }
+
+            return String(Math.floor(1000 + Math.random() * 9000));
+
+        }
+
         async function generateNewTvPairCode() {
-            activePairCode = String(Math.floor(1000 + Math.random() * 9000));
+            activePairCode = pickOpticalSafePairCode();
             tvKnowsMobileConnected = false; tvSeqCounter = 1; lastSeenMobSeq = -1;
             document.getElementById('tv-pair-display').textContent = activePairCode;
             updateSyncStatusLightsUI();
@@ -1299,7 +1325,7 @@
                 tvMask: tvMaskAnswersBeforeReveal, showExp: showExplanationOnReveal, showSummary: showTvSummaryModal,
                 feverMap: manualFeverOverrides, className: getActiveClassName(), quizNo: getActiveQuizNo(),
                 classSize: classSize, useNumeric: useNumericLabels, lockedState: questionLockedState,
-                allMemory: questionAnswersMemory, mobileConnected: isInit ? false : tvKnowsMobileConnected, updatedAt: Date.now()
+                allMemory: questionAnswersMemory, mobileConnected: isInit ? false : tvKnowsMobileConnected, sid: CLIENT_SESSION_ID, updatedAt: Date.now()
             };
             try {
                 await fetch(getGasUrl(), {
@@ -1323,7 +1349,7 @@
                     tvMask: tvMaskAnswersBeforeReveal, showExp: showExplanationOnReveal, showSummary: showTvSummaryModal,
                     feverMap: manualFeverOverrides, className: getActiveClassName(), quizNo: getActiveQuizNo(),
                     classSize: classSize, useNumeric: useNumericLabels, answers: studentAnswers,
-                    allMemory: questionAnswersMemory, lockedState: questionLockedState, mobileConnected: true, updatedAt: Date.now()
+                    allMemory: questionAnswersMemory, lockedState: questionLockedState, mobileConnected: true, sid: CLIENT_SESSION_ID, updatedAt: Date.now()
                 };
                 try {
                     await fetch(getGasUrl(), {
@@ -1350,7 +1376,7 @@
                     activePairCode = inputCode; inputEl.value = activePairCode;
                     isMobilePaired = true; isStandaloneQuizMode = false; allowOpticalPairUntil = 0; hasQuestionMismatch = false;
                     document.getElementById('mobile-q-mismatch-banner').style.display = 'none';
-                    const tvLive = data.live; lastSeenTvSeq = tvLive.tvSeq || 0;
+                    const tvLive = data.live; lastSeenTvSeq = tvLive.tvSeq || 0; lastSeenTvSid = tvLive.sid || '';
                     if (tvLive.roomCode) {
                         document.getElementById('challenge-code').value = tvLive.roomCode;
                         document.getElementById('tv-code-input').value = tvLive.roomCode;
@@ -1403,6 +1429,7 @@
                             showToast(`🟢 手機遙控器已連線（配對碼 ${activePairCode}）！`);
                             updateSyncStatusLightsUI();
                         }
+                        if (mbLive.sid && mbLive.sid !== lastSeenMobSid) { lastSeenMobSid = mbLive.sid; lastSeenMobSeq = -1; }
                         if (typeof mbLive.mobSeq === 'number' && mbLive.mobSeq > lastSeenMobSeq) {
                             lastSeenMobSeq = mbLive.mobSeq;
                             applyMobileStateToTv(mbLive);
@@ -1423,6 +1450,7 @@
                     const data = await res.json();
                     if (data && data.status === 'success' && data.live) {
                         const tvLive = data.live;
+                        if (tvLive.sid && tvLive.sid !== lastSeenTvSid) { lastSeenTvSid = tvLive.sid; lastSeenTvSeq = -1; }
                         if (typeof tvLive.tvSeq === 'number' && tvLive.tvSeq > lastSeenTvSeq) {
                             lastSeenTvSeq = tvLive.tvSeq;
                             if (typeof tvLive.qIndex === 'number' && tvLive.qIndex !== currentQIndex) {
@@ -1443,7 +1471,7 @@
             hasQuestionMismatch = false;
             document.getElementById('mobile-q-mismatch-banner').style.display = 'none';
             if (strategy === 'FOLLOW_TV') { currentQIndex = remoteTvQIndex; renderCurrentQuestion(); pushMobileMailboxToCloud(true); }
-            else { pushTvMailboxToCloud(false); pushMobileMailboxToCloud(true); }
+            else { pushMobileMailboxToCloud(true); }
             updateSyncStatusLightsUI();
         }
 
@@ -1797,8 +1825,11 @@
             updateScoreBoard(); showToast('🧹 已重置本場賽車里程與作答記憶！');
         }
 
+        let lastUploadSignature = '';
         async function uploadClassSessionToGAS() {
             updateRecordedQuestionCounter();
+            const uploadSig = JSON.stringify([getActiveClassName(), questionAnswersMemory, questionLockedState]);
+            if (uploadSig === lastUploadSignature && !confirm('這一場的成績已經上傳過了，確定要再上傳一次嗎？（會產生重複紀錄）')) return;
             const qKeys = Object.keys(questionAnswersMemory).filter(k => Object.keys(questionAnswersMemory[k] || {}).length > 0);
             const testedCount = qKeys.length;
             if (testedCount === 0) { showToast('⚠️ 尚無作答紀錄可上傳！'); return; }
@@ -1829,13 +1860,14 @@
                 return {
                     seatNo: seatPad, playerName: `${className}_${seatPad}號 (${quizNo})`, score: st.score,
                     correctCount: st.correct, wrongCount: st.wrong, maxCombo: st.correct, durationSeconds: studentTotalQ * 15,
-                    rankTitle: `${rankBadge}||${topicStr}||${wrongStr}||${className}||${quizNo}`
+                    rankTitle: `${rankBadge}||${topicStr}||${wrongStr}||${className}||${quizNo}||${studentTotalQ}`
                 };
             });
             try {
                 const upRes = await fetch(getGasUrl(), { method: 'POST', headers: { 'Content-Type': 'text/plain;charset=utf-8' }, body: JSON.stringify({ action: "submitBatchScores", roomCode: code, records: batchRecords, wantLeaderboard: false }) });
                 const upData = await upRes.json();
                 if (!upData || upData.status !== 'success') { showToast((upData && upData.message) || '❌ 上傳失敗，請稍後再試'); return; }
+                lastUploadSignature = uploadSig;
                 toggleTvSummaryView(true, false);
                 showToast(`🎉 成功儲存【${className}｜${quizNo}】百分制成績！`);
                 await detectNextQuizNumberForClass(className);
@@ -1995,7 +2027,7 @@
 
         function triggerNativeCamera() { document.getElementById('native-camera-input').click(); }
         function handleNativeCameraSnap(e) {
-            const f = e.target.files && e.target.files[0]; if (!f) return; stopCamera();
+            const f = e.target.files && e.target.files[0]; e.target.value = ''; if (!f) return; stopCamera();
             const img = new Image();
             img.onload = function() {
                 const cv = document.getElementById('scan-canvas'), ctx = cv.getContext('2d', { willReadFrequently: true });
@@ -2230,7 +2262,7 @@
         }
 
         function updateClassSize(val, skipSync = false) {
-            classSize = Math.max(10, Math.min(100, parseInt(val) || 28));
+            classSize = Math.max(1, Math.min(100, parseInt(val) || 28));
             params.classSize = classSize;
             document.getElementById('lbl-class-size').textContent = classSize;
             document.getElementById('slider-class-size').value = classSize;
@@ -2525,6 +2557,24 @@
             } catch (e) { showToast('❌ 雲端儲存失敗'); }
         }
 
+        // 舉牌系列的百分制：分母是「本場施測題數」，沒作答的題目也算在內
+
+        function snapScoreFromRecord(r, cCnt, wCnt, fallback) {
+
+            const parts = String(r.rankTitle || "").split("||");
+
+            let totalQ = Number(parts[5]) || 0;
+
+            const dur = Number(r.durationSeconds) || 0;
+
+            if (!totalQ && dur > 0 && dur % 15 === 0) totalQ = dur / 15;
+
+            totalQ = Math.max(totalQ, cCnt + wCnt);
+
+            return totalQ > 0 ? Math.round((cCnt / totalQ) * 100) : fallback;
+
+        }
+
         function unpackLogRecord(r) {
             let rawRank = String(r.rankTitle || ""), topic = String(r.topicSummary || ""), wrong = String(r.wrongDetails || ""), className = "未分類班級", quizNo = "測驗一";
             if (rawRank.includes("||")) {
@@ -2533,6 +2583,7 @@
             }
             const cCnt = Number(r.correctCount) || 0, wCnt = Number(r.wrongCount) || 0, totalQ = cCnt + wCnt;
             let finalScore = totalQ > 0 ? Math.round((cCnt / totalQ) * 100) : (Number(r.score) || 0);
+            finalScore = snapScoreFromRecord(r, cCnt, wCnt, finalScore);
             return Object.assign({}, r, { score: finalScore, rankTitle: rawRank, topicSummary: topic || "舉牌逆轉王", wrongDetails: wrong || "全對無失誤", className, quizNo });
         }
 
@@ -2628,6 +2679,7 @@
         }
 
         function switchTab(tab) {
+            if (tab !== 'scan' && scanning) stopCamera();
             ['tv', 'scan', 'wall', 'admin'].forEach(t => {
                 const b = document.getElementById(`tab-${t}`), p = document.getElementById(`panel-${t}`);
                 if (b) b.classList.toggle('active', t === tab);
@@ -2663,6 +2715,26 @@
             if (isMobileOrTabletDevice()) switchTab('scan');
             else { switchTab('tv'); generateNewTvPairCode(); }
         };
+        // ===== v2 階段二：全域穩定性補強 =====
+        (function () {
+            const rawStartCamera = startCamera;
+            let cameraStarting = false;
+            startCamera = async function () {
+                if (scanning || cameraStarting) return;
+                cameraStarting = true;
+                try { await rawStartCamera(); } finally { cameraStarting = false; }
+            };
+            document.addEventListener('pointerdown', function () {
+                try {
+                    if (!audioCtx) audioCtx = new (window.AudioContext || window.webkitAudioContext)();
+                    if (audioCtx.state === 'suspended') audioCtx.resume();
+                } catch (e) {}
+            }, { once: true, capture: true });
+            document.addEventListener('visibilitychange', function () {
+                if (document.hidden && scanning) { stopCamera(); showToast('📷 已暫停相機（畫面切到背景），回來後請再按「開始掃描」'); }
+            });
+        })();
+
     </script>
 </body>
 </html>

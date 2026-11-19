@@ -3,7 +3,7 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no, viewport-fit=cover">
-    <title>舉牌秒答樂 PopQuiz Snap! [v2.8.7 極限大條碼旗艦版]</title>
+    <title>舉牌秒答樂 PopQuiz Snap! [v2.8.8 極限大條碼旗艦版]</title>
     <script src="https://cdnjs.cloudflare.com/ajax/libs/jspdf/2.5.1/jspdf.umd.min.js"></script>
     <style>
         * { box-sizing: border-box; -webkit-tap-highlight-color: transparent; }
@@ -639,7 +639,7 @@
 
                     <div class="class-size-pill">
                         <span>👥 <strong id="lbl-class-size" style="color:#0984e3;">28</strong>人</span>
-                        <input type="range" id="slider-class-size" min="10" max="100" value="28" oninput="updateClassSize(this.value)" style="width:75px; cursor:pointer;">
+                        <input type="range" id="slider-class-size" min="1" max="100" value="28" oninput="updateClassSize(this.value)" style="width:75px; cursor:pointer;">
                     </div>
                 </div>
                 <div class="quiz-input-group">
@@ -923,7 +923,7 @@
 
                 <div style="display:flex; gap:14px; flex-wrap:wrap; align-items:center; margin-bottom:14px;">
                     <label style="font-weight:bold;">🏷️ 課程單元名稱：<input type="text" id="set-title" value="二位數乘法挑戰" style="padding:6px 10px; border-radius:6px; border:2px solid #bdc3c7; font-weight:bold; width:200px;"></label>
-                    <label style="font-weight:bold;">👥 預設班級人數：<input type="number" id="set-class-size" min="10" max="100" value="28" onchange="updateClassSize(this.value)" style="padding:6px 10px; border-radius:6px; border:2px solid #bdc3c7; font-weight:bold; width:75px;"></label>
+                    <label style="font-weight:bold;">👥 預設班級人數：<input type="number" id="set-class-size" min="1" max="100" value="28" onchange="updateClassSize(this.value)" style="padding:6px 10px; border-radius:6px; border:2px solid #bdc3c7; font-weight:bold; width:75px;"></label>
                 </div>
 
                 <div class="class-builder-box">
@@ -1112,7 +1112,7 @@
         // =====================================================================
         // 🌟 0. 全域設定、預設 [00000] 二位數乘法題庫與雙向獨立信箱變數 [v2.8.6]
         // =====================================================================
-        const APP_VERSION = "v2.8.7";
+        const APP_VERSION = "v2.8.8";
         const DEFAULT_GAS_URL = "https://script.google.com/macros/s/AKfycbz-ahKWG05gV6VzO0LNI-qLJAUv3Ce_JUHX-WBSRlySG7IPa6jh-aB6s4y4mVrXCqEa/exec";
         const DEFAULT_SITE_URL = "https://sites.google.com/view/linyuchi/snap%E8%88%89%E7%89%8C%E4%BA%92%E5%8B%95%E6%8C%91%E6%88%B0%E5%8D%80/popquiz-snap";
 
@@ -1136,6 +1136,8 @@
         let lastSeenTvSeq = -1;
         let mobSeqCounter = 0;
         let lastSeenMobSeq = -1;
+        const CLIENT_SESSION_ID = Math.random().toString(36).slice(2, 10);
+        let lastSeenMobSid = '', lastSeenTvSid = '';
 
         let questionAnswersMemory = {};
         let questionLockedState = {};
@@ -1377,8 +1379,32 @@
         let mobilePollTimer = null;
         let tvKnowsMobileConnected = false;
 
+        function pickOpticalSafePairCode() {
+
+            for (let attempt = 0; attempt < 500; attempt++) {
+
+                const s = String(Math.floor(1000 + Math.random() * 9000));
+
+                const code = encodePairCodeTo16Bits(s), dots = popcount16(code);
+
+                if (dots < 5 || dots > 11) continue;
+
+                let ok = true, r = code;
+
+                for (let k = 1; k < 4 && ok; k++) { r = rotate16BitsCW(r); const d = decode16BitsToPairCode(r); if (d && d !== s) ok = false; }
+
+                if (ok) ok = !MARKER_CODES.some(m => { let t = m; for (let k = 0; k < 4; k++) { if (t === code) return true; t = rotate16BitsCW(t); } return false; });
+
+                if (ok) return s;
+
+            }
+
+            return String(Math.floor(1000 + Math.random() * 9000));
+
+        }
+
         async function generateNewTvPairCode() {
-            activePairCode = String(Math.floor(1000 + Math.random() * 9000));
+            activePairCode = pickOpticalSafePairCode();
             tvKnowsMobileConnected = false;
             tvSeqCounter = 1;
             lastSeenMobSeq = -1;
@@ -1492,7 +1518,7 @@
                 lockedState: questionLockedState,
                 allMemory: questionAnswersMemory,
                 mobileConnected: isInit ? false : tvKnowsMobileConnected,
-                updatedAt: Date.now()
+                sid: CLIENT_SESSION_ID, updatedAt: Date.now()
             };
             try {
                 await fetch(getGasUrl(), {
@@ -1534,7 +1560,7 @@
                     allMemory: questionAnswersMemory,
                     lockedState: questionLockedState,
                     mobileConnected: true,
-                    updatedAt: Date.now()
+                    sid: CLIENT_SESSION_ID, updatedAt: Date.now()
                 };
                 try {
                     await fetch(getGasUrl(), {
@@ -1581,7 +1607,7 @@
                     document.getElementById('mobile-q-mismatch-banner').style.display = 'none';
 
                     const tvLive = data.live;
-                    lastSeenTvSeq = tvLive.tvSeq || 0;
+                    lastSeenTvSeq = tvLive.tvSeq || 0; lastSeenTvSid = tvLive.sid || '';
 
                     if (tvLive.roomCode) {
                         document.getElementById('challenge-code').value = tvLive.roomCode;
@@ -1647,6 +1673,7 @@
                             showToast(`🟢 手機遙控器已連線（配對碼 ${activePairCode}），可以開始掃描！`);
                             updateSyncStatusLightsUI();
                         }
+                        if (mbLive.sid && mbLive.sid !== lastSeenMobSid) { lastSeenMobSid = mbLive.sid; lastSeenMobSeq = -1; }
                         if (typeof mbLive.mobSeq === 'number' && mbLive.mobSeq > lastSeenMobSeq) {
                             lastSeenMobSeq = mbLive.mobSeq;
                             applyMobileStateToTv(mbLive);
@@ -1667,6 +1694,7 @@
                     const data = await res.json();
                     if (data && data.status === 'success' && data.live) {
                         const tvLive = data.live;
+                        if (tvLive.sid && tvLive.sid !== lastSeenTvSid) { lastSeenTvSid = tvLive.sid; lastSeenTvSeq = -1; }
                         if (typeof tvLive.tvSeq === 'number' && tvLive.tvSeq > lastSeenTvSeq) {
                             lastSeenTvSeq = tvLive.tvSeq;
                             if (typeof tvLive.qIndex === 'number' && tvLive.qIndex !== currentQIndex) {
@@ -1696,7 +1724,6 @@
                 pushMobileMailboxToCloud(true);
                 showToast(`🔄 手機已跟隨大電視切換至第 ${currentQIndex + 1} 題！`);
             } else {
-                pushTvMailboxToCloud(false);
                 pushMobileMailboxToCloud(true);
                 showToast(`📲 已強制大電視跟隨手機切換至第 ${currentQIndex + 1} 題！`);
             }
@@ -2170,8 +2197,11 @@
             showToast('🧹 已重置本場測驗的所有題目作答記憶！');
         }
 
+        let lastUploadSignature = '';
         async function uploadClassSessionToGAS() {
             updateRecordedQuestionCounter();
+            const uploadSig = JSON.stringify([getActiveClassName(), questionAnswersMemory, questionLockedState]);
+            if (uploadSig === lastUploadSignature && !confirm('這一場的成績已經上傳過了，確定要再上傳一次嗎？（會產生重複紀錄）')) return;
             const qKeys = Object.keys(questionAnswersMemory).filter(k => Object.keys(questionAnswersMemory[k] || {}).length > 0);
             const testedCount = qKeys.length;
             if (testedCount === 0) {
@@ -2221,7 +2251,7 @@
                     wrongCount: st.wrong,
                     maxCombo: st.correct,
                     durationSeconds: studentTotalQ * 15,
-                    rankTitle: `${rankBadge}||${topicStr}||${wrongStr}||${className}||${quizNo}`
+                    rankTitle: `${rankBadge}||${topicStr}||${wrongStr}||${className}||${quizNo}||${studentTotalQ}`
                 };
             });
 
@@ -2229,6 +2259,7 @@
                 const upRes = await fetch(getGasUrl(), { method: 'POST', headers: { 'Content-Type': 'text/plain;charset=utf-8' }, body: JSON.stringify({ action: "submitBatchScores", roomCode: code, records: batchRecords, wantLeaderboard: false }) });
                 const upData = await upRes.json();
                 if (!upData || upData.status !== 'success') { showToast((upData && upData.message) || '❌ 上傳失敗，請稍後再試'); return; }
+                lastUploadSignature = uploadSig;
                 toggleTvSummaryView(true, false);
                 showToast(`🎉 成功儲存【${className}｜${quizNo}】全班百分制成績！`);
                 await detectNextQuizNumberForClass(className);
@@ -2634,20 +2665,27 @@
             pCtx.restore();
         }
 
-        function renderPrintCards() {
+        async function renderPrintCards() {
             const s = parseInt(document.getElementById('slider-print-start').value) || 1;
             const e = parseInt(document.getElementById('slider-print-end').value) || 28;
             const c = document.getElementById('print-cards-container'); if (!c) return;
+            const key = s + '-' + e;
+            if (c.dataset.rendered === key && c.children.length) return;
+            const token = (renderPrintCards._token = (renderPrintCards._token || 0) + 1);
+            c.dataset.rendered = key;
             c.innerHTML = '';
+            const work = document.createElement('canvas'); work.width = 1600; work.height = 2263;
             const previewEnd = Math.min(e, s + 29);
             for (let i = s; i <= previewEnd; i++) {
+                if (token !== renderPrintCards._token) return;
+                drawOrigamiA4SheetCanvas(work, i);
+                const thumb = document.createElement('canvas'); thumb.width = 560; thumb.height = 792;
+                thumb.getContext('2d').drawImage(work, 0, 0, 560, 792);
                 const sh = document.createElement('div'); sh.className = 'fold-sheet';
-                const pageCanvas = document.createElement('canvas');
-                pageCanvas.width = 1600; pageCanvas.height = 2263;
-                drawOrigamiA4SheetCanvas(pageCanvas, i);
-                sh.appendChild(pageCanvas);
-                c.appendChild(sh);
+                sh.appendChild(thumb); c.appendChild(sh);
+                await new Promise(r => setTimeout(r, 0));
             }
+            work.width = work.height = 0;
         }
 
         async function downloadCardsAsPDF(paperFormat = 'a3') {
@@ -2709,7 +2747,7 @@
 
         function triggerNativeCamera() { document.getElementById('native-camera-input').click(); }
         function handleNativeCameraSnap(e) {
-            const f = e.target.files && e.target.files[0]; if (!f) return; stopCamera();
+            const f = e.target.files && e.target.files[0]; e.target.value = ''; if (!f) return; stopCamera();
             const img = new Image();
             img.onload = function() {
                 const cv = document.getElementById('scan-canvas'), ctx = cv.getContext('2d', { willReadFrequently: true });
@@ -3009,7 +3047,7 @@
         }
 
         function updateClassSize(val, skipSync = false) {
-            classSize = Math.max(10, Math.min(100, parseInt(val) || 28));
+            classSize = Math.max(1, Math.min(100, parseInt(val) || 28));
             params.classSize = classSize;
             document.getElementById('lbl-class-size').textContent = classSize;
             document.getElementById('slider-class-size').value = classSize;
@@ -3460,6 +3498,24 @@
             } catch (e) { showToast('❌ 雲端儲存失敗'); }
         }
 
+        // 舉牌系列的百分制：分母是「本場施測題數」，沒作答的題目也算在內
+
+        function snapScoreFromRecord(r, cCnt, wCnt, fallback) {
+
+            const parts = String(r.rankTitle || "").split("||");
+
+            let totalQ = Number(parts[5]) || 0;
+
+            const dur = Number(r.durationSeconds) || 0;
+
+            if (!totalQ && dur > 0 && dur % 15 === 0) totalQ = dur / 15;
+
+            totalQ = Math.max(totalQ, cCnt + wCnt);
+
+            return totalQ > 0 ? Math.round((cCnt / totalQ) * 100) : fallback;
+
+        }
+
         function unpackLogRecord(r) {
             let rawRank = String(r.rankTitle || ""), topic = String(r.topicSummary || ""), wrong = String(r.wrongDetails || "");
             let className = "未分類班級", quizNo = "測驗一";
@@ -3477,6 +3533,7 @@
                 finalScore = Math.round((cCnt / totalQ) * 100);
             }
 
+            finalScore = snapScoreFromRecord(r, cCnt, wCnt, finalScore);
             return Object.assign({}, r, {
                 score: finalScore,
                 rankTitle: rawRank,
@@ -3603,6 +3660,8 @@
         }
 
         function switchTab(tab) {
+            if (tab !== 'scan' && scanning) stopCamera();
+            if (tab === 'print') renderPrintCards();
             ['tv', 'scan', 'sim', 'wall', 'print', 'admin'].forEach(t => {
                 const b = document.getElementById(`tab-${t}`), p = document.getElementById(`panel-${t}`);
                 if (b) b.classList.toggle('active', t === tab);
@@ -3642,7 +3701,6 @@
             renderCurrentQuestion();
             renderSimCard();
             initWallStage();
-            renderPrintCards();
             renderSettingsTable();
 
             if (isMobileOrTabletDevice()) {
@@ -3652,6 +3710,26 @@
                 generateNewTvPairCode();
             }
         };
+        // ===== v2 階段二：全域穩定性補強 =====
+        (function () {
+            const rawStartCamera = startCamera;
+            let cameraStarting = false;
+            startCamera = async function () {
+                if (scanning || cameraStarting) return;
+                cameraStarting = true;
+                try { await rawStartCamera(); } finally { cameraStarting = false; }
+            };
+            document.addEventListener('pointerdown', function () {
+                try {
+                    if (!audioCtx) audioCtx = new (window.AudioContext || window.webkitAudioContext)();
+                    if (audioCtx.state === 'suspended') audioCtx.resume();
+                } catch (e) {}
+            }, { once: true, capture: true });
+            document.addEventListener('visibilitychange', function () {
+                if (document.hidden && scanning) { stopCamera(); showToast('📷 已暫停相機（畫面切到背景），回來後請再按「開始掃描」'); }
+            });
+        })();
+
     </script>
 </body>
 </html>
