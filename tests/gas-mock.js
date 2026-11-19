@@ -17,6 +17,7 @@ function coerce(v) {
 
 class Sheet {
   constructor(name) { this.name = name; this.data = []; }
+  getName() { return this.name; }
   width() { return this.data.reduce((m, r) => Math.max(m, r.length), 0); }
   appendRow(row) { this.data.push(row.map(coerce)); }
   setFrozenRows() {}
@@ -56,6 +57,7 @@ class Sheet {
 class Spreadsheet {
   constructor(id) { this.id = id; this.sheets = {}; }
   getSheetByName(n) { return this.sheets[n] || null; }
+  getSheets() { return Object.values(this.sheets); }
   insertSheet(n) { return (this.sheets[n] = new Sheet(n)); }
   getId() { return this.id; }
   getName() { return 'mock'; }
@@ -78,7 +80,7 @@ function services(env) {
   return {
     SpreadsheetApp: {
       getActiveSpreadsheet: () => env.ss,
-      openById: id => { if (id !== env.hub.id) throw new Error('not found'); return env.hub; },
+      openById: id => { if (id === env.hub.id) return env.hub; if (env.others && env.others[id]) return env.others[id]; throw new Error('not found'); },
       flush() {},
     },
     CacheService: { getScriptCache: () => ({
@@ -122,4 +124,4 @@ function run(env, fnName, arg) {
 const post = (env, body) => run(env, 'doPost', { postData: { contents: typeof body === 'string' ? body : JSON.stringify(body) } });
 const get = (env, params) => run(env, 'doGet', { parameter: params });
 
-module.exports = { createEnv, run, post, get };
+module.exports = { createEnv, run, post, get, Spreadsheet };

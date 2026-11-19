@@ -3,7 +3,7 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no, viewport-fit=cover">
-    <title>舉牌逆轉王 PopQuiz Showdown! [v1.2.2 極速賽道超車版]</title>
+    <title>舉牌逆轉王 PopQuiz Showdown! [v1.2.3 極速賽道超車版]</title>
     <style>
         * { box-sizing: border-box; -webkit-tap-highlight-color: transparent; }
         body, html { margin: 0; padding: 0; width: 100%; background: #0b1120; color: #2c3e50; font-family: 'Segoe UI', 'Microsoft JhengHei', sans-serif; overflow-x: hidden; }
@@ -722,8 +722,9 @@
     </div>
 
     <script>
-        const APP_VERSION = "v1.2.2";
-        const DEFAULT_GAS_URL = "https://script.google.com/macros/s/AKfycbzoaZ--EPlQJ49p8EtgKDH5cbNg4DA6YXiVvL2Q2vQMe69ubfVZc46-OVh2UIZgPg/exec";
+        const GAME_LABEL = '逆轉王';
+        const APP_VERSION = "v1.2.3";
+        const DEFAULT_GAS_URL = "https://script.google.com/macros/s/AKfycbwldbgt8JrFwbP4GbaMR-ICgWrdY6N7flmilKvXOI-rudwwfLUMu3b5NCL-KWofiL85/exec";
         const DEFAULT_SITE_URL = "https://sites.google.com/view/linyuchi/snap%E8%88%89%E7%89%8C%E4%BA%92%E5%8B%95%E6%8C%91%E6%88%B0%E5%8D%80/PopQuiz";
 
         let classSize = 28;
@@ -818,6 +819,7 @@
 
         function getGasUrl() {
             const saved = localStorage.getItem('POPQUIZ_SHOWDOWN_GAS_URL');
+            if (saved === 'https://script.google.com/macros/s/AKfycbzoaZ--EPlQJ49p8EtgKDH5cbNg4DA6YXiVvL2Q2vQMe69ubfVZc46-OVh2UIZgPg/exec') { localStorage.setItem('POPQUIZ_SHOWDOWN_GAS_URL', DEFAULT_GAS_URL); return DEFAULT_GAS_URL; }
             return (saved && saved.startsWith('http')) ? saved : DEFAULT_GAS_URL;
         }
         function saveGasUrl() {
@@ -1860,7 +1862,7 @@
                 return {
                     seatNo: seatPad, playerName: `${className}_${seatPad}號 (${quizNo})`, score: st.score,
                     correctCount: st.correct, wrongCount: st.wrong, maxCombo: st.correct, durationSeconds: studentTotalQ * 15,
-                    rankTitle: `${rankBadge}||${topicStr}||${wrongStr}||${className}||${quizNo}||${studentTotalQ}`
+                    rankTitle: `${rankBadge}||${topicStr}||${wrongStr}||${className}||${quizNo}||${studentTotalQ}||逆轉王`
                 };
             });
             try {
@@ -2584,7 +2586,7 @@
             const cCnt = Number(r.correctCount) || 0, wCnt = Number(r.wrongCount) || 0, totalQ = cCnt + wCnt;
             let finalScore = totalQ > 0 ? Math.round((cCnt / totalQ) * 100) : (Number(r.score) || 0);
             finalScore = snapScoreFromRecord(r, cCnt, wCnt, finalScore);
-            return Object.assign({}, r, { score: finalScore, rankTitle: rawRank, topicSummary: topic || "舉牌逆轉王", wrongDetails: wrong || "全對無失誤", className, quizNo });
+            return Object.assign({}, r, { gameName: String(r.rankTitle || "").split("||")[6] || "", score: finalScore, rankTitle: rawRank, topicSummary: topic || "舉牌逆轉王", wrongDetails: wrong || "全對無失誤", className, quizNo });
         }
 
         async function fetchTeacherRecords() {
@@ -2629,13 +2631,13 @@
             document.getElementById('admin-record-summary').textContent = `符合學生 ${filteredBoard.length} 人 ｜ 紀錄 ${filteredLogs.length} 筆`;
             if (mode === 'all_logs') {
                 thead.innerHTML = `<tr><th>序號</th><th>時間</th><th>班級</th><th>場次</th><th>座號</th><th>總分(百分制)</th><th>答對/錯</th><th>錯題診斷明細</th></tr>`;
-                tbody.innerHTML = filteredLogs.map((r, i) => `<tr><td>#${filteredLogs.length - i}</td><td>${escapeHtml(r.timestamp)}</td><td><b>${escapeHtml(r.className)}</b></td><td>${escapeHtml(r.quizNo)}</td><td><b>${escapeHtml(r.seatNo)}號</b></td><td style="color:#e74c3c;font-weight:900;">${r.score}</td><td>${r.correctCount}/${r.wrongCount}</td><td style="color:#c0392b;text-align:left;font-size:12px;">${escapeHtml(r.wrongDetails)}</td></tr>`).join('');
+                tbody.innerHTML = filteredLogs.map((r, i) => `<tr><td>#${filteredLogs.length - i}</td><td>${escapeHtml(r.timestamp)}</td><td><b>${escapeHtml(r.className)}</b></td><td>${escapeHtml(r.quizNo)}${r.gameName ? '<div style="font-size:11px;color:#636e72;font-weight:normal;">' + escapeHtml(r.gameName) + '</div>' : ''}</td><td><b>${escapeHtml(r.seatNo)}號</b></td><td style="color:#e74c3c;font-weight:900;">${r.score}</td><td>${r.correctCount}/${r.wrongCount}</td><td style="color:#c0392b;text-align:left;font-size:12px;">${escapeHtml(r.wrongDetails)}</td></tr>`).join('');
             } else {
                 thead.innerHTML = `<tr><th>排序</th><th>班級</th><th>座號</th><th>最近場次</th><th>最高總分</th><th>答對/錯</th><th>次數</th><th>錯題診斷明細</th></tr>`;
                 let list = filteredBoard.slice();
                 if (mode === 'best_seat') list.sort((a, b) => a.className.localeCompare(b.className, 'zh-Hant') || (parseInt(a.seatNo) || 999) - (parseInt(b.seatNo) || 999));
                 else list.sort((a, b) => b.score - a.score);
-                tbody.innerHTML = list.map((r, i) => `<tr><td>${i + 1}</td><td><b>${escapeHtml(r.className)}</b></td><td style="color:#0984e3;font-weight:900;">${escapeHtml(r.seatNo)}號</td><td>${escapeHtml(r.quizNo)}</td><td style="color:#e74c3c;font-weight:900;">${r.score}</td><td>${r.correctCount}/${r.wrongCount}</td><td>${r.attempts} 次</td><td style="color:#c0392b;text-align:left;font-size:12px;">${escapeHtml(st ? st.wrongDetails : r.wrongDetails)}</td></tr>`.replace('st ? st.wrongDetails : ', '')).join('');
+                tbody.innerHTML = list.map((r, i) => `<tr><td>${i + 1}</td><td><b>${escapeHtml(r.className)}</b></td><td style="color:#0984e3;font-weight:900;">${escapeHtml(r.seatNo)}號</td><td>${escapeHtml(r.quizNo)}${r.gameName ? '<div style="font-size:11px;color:#636e72;font-weight:normal;">' + escapeHtml(r.gameName) + '</div>' : ''}</td><td style="color:#e74c3c;font-weight:900;">${r.score}</td><td>${r.correctCount}/${r.wrongCount}</td><td>${r.attempts} 次</td><td style="color:#c0392b;text-align:left;font-size:12px;">${escapeHtml(st ? st.wrongDetails : r.wrongDetails)}</td></tr>`.replace('st ? st.wrongDetails : ', '')).join('');
             }
         }
 
@@ -2662,8 +2664,8 @@
 
         function exportRecordsCSV() {
             const logs = getFilteredAdminLogs(); if (!logs.length) { showToast('⚠️ 無資料可匯出'); return; }
-            let csv = "\uFEFF時間,挑戰代碼,班級名稱,測驗場次,座號,總分(百分制),答對題數,答錯題數,單元名稱,錯題診斷明細\n";
-            logs.forEach(r => { csv += `"${r.timestamp}","'${r.roomCode}","${r.className}","${r.quizNo}","'${r.seatNo}",${r.score},${r.correctCount},${r.wrongCount},"${r.topicSummary}","${r.wrongDetails}"\n`; });
+            let csv = "\uFEFF時間,挑戰代碼,班級名稱,測驗場次,座號,總分(百分制),答對題數,答錯題數,單元名稱,錯題診斷明細,遊戲\n";
+            logs.forEach(r => { csv += `"${r.timestamp}","'${r.roomCode}","${r.className}","${r.quizNo}","'${r.seatNo}",${r.score},${r.correctCount},${r.wrongCount},"${r.topicSummary}","${r.wrongDetails}","${r.gameName || ""}"\n`; });
             const a = document.createElement('a'); a.href = URL.createObjectURL(new Blob([csv], { type: 'text/csv;charset=utf-8;' }));
             a.download = `舉牌逆轉王_${cachedTeacherData.roomCode}_成績冊.csv`; a.click();
         }

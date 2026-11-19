@@ -3,7 +3,7 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no, viewport-fit=cover">
-    <title>舉牌秒答樂 PopQuiz Snap! [v2.8.8 極限大條碼旗艦版]</title>
+    <title>舉牌秒答樂 PopQuiz Snap! [v2.8.9 極限大條碼旗艦版]</title>
     <script src="https://cdnjs.cloudflare.com/ajax/libs/jspdf/2.5.1/jspdf.umd.min.js"></script>
     <style>
         * { box-sizing: border-box; -webkit-tap-highlight-color: transparent; }
@@ -1112,7 +1112,8 @@
         // =====================================================================
         // 🌟 0. 全域設定、預設 [00000] 二位數乘法題庫與雙向獨立信箱變數 [v2.8.6]
         // =====================================================================
-        const APP_VERSION = "v2.8.8";
+        const GAME_LABEL = '秒答樂';
+        const APP_VERSION = "v2.8.9";
         const DEFAULT_GAS_URL = "https://script.google.com/macros/s/AKfycbz-ahKWG05gV6VzO0LNI-qLJAUv3Ce_JUHX-WBSRlySG7IPa6jh-aB6s4y4mVrXCqEa/exec";
         const DEFAULT_SITE_URL = "https://sites.google.com/view/linyuchi/snap%E8%88%89%E7%89%8C%E4%BA%92%E5%8B%95%E6%8C%91%E6%88%B0%E5%8D%80/popquiz-snap";
 
@@ -2251,7 +2252,7 @@
                     wrongCount: st.wrong,
                     maxCombo: st.correct,
                     durationSeconds: studentTotalQ * 15,
-                    rankTitle: `${rankBadge}||${topicStr}||${wrongStr}||${className}||${quizNo}||${studentTotalQ}`
+                    rankTitle: `${rankBadge}||${topicStr}||${wrongStr}||${className}||${quizNo}||${studentTotalQ}||秒答樂`
                 };
             });
 
@@ -3534,7 +3535,7 @@
             }
 
             finalScore = snapScoreFromRecord(r, cCnt, wCnt, finalScore);
-            return Object.assign({}, r, {
+            return Object.assign({}, r, { gameName: String(r.rankTitle || "").split("||")[6] || "",
                 score: finalScore,
                 rankTitle: rawRank,
                 topicSummary: topic || "舉牌秒答樂",
@@ -3597,7 +3598,7 @@
             if (mode === 'all_logs') {
                 thead.innerHTML = `<tr><th>序號</th><th>時間</th><th>班級</th><th>場次</th><th>座號</th><th>總分(百分制)</th><th>答對/錯</th><th>錯題診斷明細</th></tr>`;
                 tbody.innerHTML = filteredLogs.map((r, i) => `
-                    <tr><td>#${filteredLogs.length - i}</td><td style="font-size:12px;">${escapeHtml(r.timestamp)}</td><td><b>${escapeHtml(r.className)}</b></td><td style="color:#0984e3;font-weight:bold;">${escapeHtml(r.quizNo)}</td><td><b>${escapeHtml(r.seatNo)}號</b></td><td style="color:#e74c3c;font-weight:900;">${r.score}</td><td>${r.correctCount}/${r.wrongCount}</td><td style="color:#c0392b;text-align:left;font-size:12px;font-weight:bold;">${escapeHtml(r.wrongDetails)}</td></tr>
+                    <tr><td>#${filteredLogs.length - i}</td><td style="font-size:12px;">${escapeHtml(r.timestamp)}</td><td><b>${escapeHtml(r.className)}</b></td><td style="color:#0984e3;font-weight:bold;">${escapeHtml(r.quizNo)}${r.gameName ? '<div style="font-size:11px;color:#636e72;font-weight:normal;">' + escapeHtml(r.gameName) + '</div>' : ''}</td><td><b>${escapeHtml(r.seatNo)}號</b></td><td style="color:#e74c3c;font-weight:900;">${r.score}</td><td>${r.correctCount}/${r.wrongCount}</td><td style="color:#c0392b;text-align:left;font-size:12px;font-weight:bold;">${escapeHtml(r.wrongDetails)}</td></tr>
                 `).join('');
             } else {
                 thead.innerHTML = `<tr><th>排序</th><th>班級</th><th>座號</th><th>最近場次</th><th>最高總分(百分制)</th><th>最佳答對/錯</th><th>測驗次數</th><th>錯題診斷明細</th></tr>`;
@@ -3605,7 +3606,7 @@
                 if (mode === 'best_seat') list.sort((a, b) => a.className.localeCompare(b.className, 'zh-Hant') || (parseInt(a.seatNo) || 999) - (parseInt(b.seatNo) || 999));
                 else list.sort((a, b) => b.score - a.score);
                 tbody.innerHTML = list.map((r, i) => `
-                    <tr><td>${i + 1}</td><td><b>${escapeHtml(r.className)}</b></td><td style="color:#0984e3;font-weight:900;">${escapeHtml(r.seatNo)}號</td><td>${escapeHtml(r.quizNo)}</td><td style="color:#e74c3c;font-weight:900;">${r.score}</td><td>${r.correctCount}/${r.wrongCount}</td><td>${r.attempts} 次</td><td style="color:#c0392b;text-align:left;font-size:12px;font-weight:bold;">${escapeHtml(r.wrongDetails)}</td></tr>
+                    <tr><td>${i + 1}</td><td><b>${escapeHtml(r.className)}</b></td><td style="color:#0984e3;font-weight:900;">${escapeHtml(r.seatNo)}號</td><td>${escapeHtml(r.quizNo)}${r.gameName ? '<div style="font-size:11px;color:#636e72;font-weight:normal;">' + escapeHtml(r.gameName) + '</div>' : ''}</td><td style="color:#e74c3c;font-weight:900;">${r.score}</td><td>${r.correctCount}/${r.wrongCount}</td><td>${r.attempts} 次</td><td style="color:#c0392b;text-align:left;font-size:12px;font-weight:bold;">${escapeHtml(r.wrongDetails)}</td></tr>
                 `).join('');
             }
         }
@@ -3643,8 +3644,8 @@
 
         function exportRecordsCSV() {
             const logs = getFilteredAdminLogs(); if (!logs.length) { showToast('⚠️ 無資料可匯出'); return; }
-            let csv = "\uFEFF時間,挑戰代碼,班級名稱,測驗場次,座號,總分(百分制),答對題數,答錯題數,單元名稱,錯題診斷明細\n";
-            logs.forEach(r => { csv += `"${r.timestamp}","'${r.roomCode}","${r.className}","${r.quizNo}","'${r.seatNo}",${r.score},${r.correctCount},${r.wrongCount},"${r.topicSummary}","${r.wrongDetails}"\n`; });
+            let csv = "\uFEFF時間,挑戰代碼,班級名稱,測驗場次,座號,總分(百分制),答對題數,答錯題數,單元名稱,錯題診斷明細,遊戲\n";
+            logs.forEach(r => { csv += `"${r.timestamp}","'${r.roomCode}","${r.className}","${r.quizNo}","'${r.seatNo}",${r.score},${r.correctCount},${r.wrongCount},"${r.topicSummary}","${r.wrongDetails}","${r.gameName || ""}"\n`; });
             const a = document.createElement('a'); a.href = URL.createObjectURL(new Blob([csv], { type: 'text/csv;charset=utf-8;' }));
             a.download = `舉牌秒答樂_${cachedTeacherData.roomCode}_成績冊.csv`; a.click();
         }

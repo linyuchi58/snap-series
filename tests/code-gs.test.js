@@ -184,4 +184,35 @@ test('TV / 手機信箱讀寫', () => {
 test('格式錯誤的請求回傳 JSON 錯誤，而不是 HTML 錯誤頁', () => assert.strictEqual(post(env, '{oops').code, 'BAD_REQUEST'));
 test('未知指令', () => assert.strictEqual(post(env, { action: 'hack' }).code, 'UNKNOWN_ACTION'));
 
+
+console.log('\n[J] 匯入逆轉王舊試算表');
+test('匯入代碼與成績；撞號的代碼跳過；舊成績標記遊戲名稱；密碼轉成雜湊', () => {
+  const { Spreadsheet } = require('./gas-mock');
+  const old = new Spreadsheet('SHOWDOWN_ID');
+  const oc = old.insertSheet('Configs');
+  oc.data.push(['roomCode', 'teacherPin', 'configJson', 'updatedAt', 'ownerPass', 'ownerName']);
+  oc.appendRow(["'55555", "'2468", JSON.stringify({ title: '逆轉王題庫', roomPin: '2468' }), new Date(), "'TeacherA", '王老師']);
+  oc.appendRow(["'12345", "'9999", JSON.stringify({ title: '撞號' }), new Date(), '', '']);
+  const os = old.insertSheet('Scores_5');
+  os.data.push(['timestamp', 'roomCode', 'seatNo', 'playerName', 'score', 'correctCount', 'wrongCount', 'maxCombo', 'durationSeconds', 'rankTitle']);
+  os.appendRow(['2026-10-01 09:00:00', "'55555", "'07", 'x', 80, 4, 1, 4, 75, '⚡||逆轉王題庫||-||三年一班||測驗一']);
+  const o1 = old.insertSheet('Scores_1');
+  o1.data.push(['timestamp', 'roomCode', 'seatNo', 'playerName', 'score', 'correctCount', 'wrongCount', 'maxCombo', 'durationSeconds', 'rankTitle']);
+  o1.appendRow(['2026-10-01 09:00:00', "'12345", "'01", 'x', 10, 1, 9, 1, 150, 'a||b||c||d||e']);
+  env.others = { SHOWDOWN_ID: old };
+  env.props.IMPORT_SOURCE_SPREADSHEET_ID = 'SHOWDOWN_ID';
+  env.props.IMPORT_GAME_LABEL = '逆轉王';
+  const scoresBefore = env.ss.sheets.Scores_1.data.length;
+  const msg = run(env, 'importFromOtherSpreadsheet');
+  assert.ok(/代碼 1 組（55555）、成績 1 筆/.test(msg) && /12345/.test(msg), msg);
+  assert.strictEqual(env.ss.sheets.Scores_1.data.length, scoresBefore, '撞號代碼的成績不能混進來');
+  const row = env.ss.sheets.Scores_5.data[1];
+  assert.strictEqual(row[2], '07'); assert.ok(row[9].endsWith('||||逆轉王'), row[9]);
+  assert.strictEqual(post(env, { action: 'verifyRoomPin', roomCode: '55555', teacherPin: '2468' }).status, 'success');
+  assert.strictEqual(post(env, { action: 'verifyRoomPin', roomCode: '55555', teacherPass: 'TeacherA' }).status, 'success');
+  const cfgRow = env.ss.sheets.Configs.data.find(r => r[0] === '55555');
+  assert.ok(String(cfgRow[1]).startsWith('h1$') && !cfgRow[2].includes('2468'));
+  assert.throws(() => run(env, 'importFromOtherSpreadsheet'), /匯入過/);
+});
+
 console.log(`\n${passed} 項通過` + (process.exitCode ? '，有失敗項目' : '，全部通過'));

@@ -694,6 +694,79 @@ function setupSecurity() {
   return msg;
 }
 
+// 🚚 把另一個試算表（例如逆轉王的舊後端）的代碼與成績搬進這個試算表
+// 用法：指令碼屬性新增
+//   IMPORT_SOURCE_SPREADSHEET_ID  舊試算表的 ID
+//   IMPORT_GAME_LABEL             （選填）舊成績要標記的遊戲名稱，例如 逆轉王
+// 然後在編輯器執行 importFromOtherSpreadsheet。同一個來源只能匯入一次。
+// ⚠️ 來源試算表請「不要」先執行 setupSecurity，否則密碼已轉成雜湊，無法搬移。
+function importFromOtherSpreadsheet() {
+  const srcId = getProp_("IMPORT_SOURCE_SPREADSHEET_ID");
+  if (!srcId) throw new Error("請先在指令碼屬性新增 IMPORT_SOURCE_SPREADSHEET_ID（舊試算表的 ID）。");
+  const doneKey = "IMPORTED_" + srcId;
+  if (getProp_(doneKey)) throw new Error("這個來源已在 " + getProp_(doneKey) + " 匯入過，為避免重複，不再匯入。");
+  const label = getProp_("IMPORT_GAME_LABEL");
+  const srcSS = SpreadsheetApp.openById(srcId);
+
+  const lock = LockService.getScriptLock();
+  lock.waitLock(30000);
+  const imported = [], conflicts = [], hashed = [];
+  let scoreCount = 0;
+  try {
+    const target = getConfigsSheet();
+    const existing = new Set(target.getDataRange().getValues().slice(1).map(r => normCode_(r[0])));
+    const srcCfg = srcSS.getSheetByName("Configs");
+    const newRows = [];
+    if (srcCfg) {
+      srcCfg.getDataRange().getValues().slice(1).forEach(r => {
+        const code = normCode_(r[0]);
+        if (!/^\d{5}$/.test(code)) return;
+        if (existing.has(code)) { conflicts.push(code); return; }
+        const pin = stripQuote_(r[1]), owner = stripQuote_(r[4]);
+        if (pin.indexOf(HASH_PREFIX) === 0 || owner.indexOf(HASH_PREFIX) === 0) { hashed.push(code); return; }
+        newRows.push(["'" + code, "'" + pin, JSON.stringify(parseConfigCell_(r[2])), r[3] || new Date(), owner ? "'" + owner : "", r[5] || ""]);
+        imported.push(code);
+        existing.add(code);
+      });
+    }
+    if (newRows.length) target.getRange(target.getLastRow() + 1, 1, newRows.length, 6).setValues(newRows);
+
+    // 成績：只搬已成功匯入的代碼，依代碼開頭數字放進對應的 Scores_x
+    const wanted = new Set(imported);
+    const bySheet = {};
+    srcSS.getSheets().forEach(sh => {
+      if (!/^Scores(_\d)?$/.test(sh.getName()) || sh.getLastRow() < 2) return;
+      sh.getRange(2, 1, sh.getLastRow() - 1, SCORE_HEADERS.length).getValues().forEach(r => {
+        const code = normCode_(r[1]);
+        if (!wanted.has(code)) return;
+        let rank = String(r[9] || "");
+        if (label && rank.split("||").length === 5) rank += "||||" + label;
+        const row = r.slice();
+        row[1] = "'" + code; row[2] = "'" + stripQuote_(r[2]); row[9] = rank;
+        const name = getScoreSheetByCode(code).getName();
+        (bySheet[name] = bySheet[name] || []).push(row);
+      });
+    });
+    Object.keys(bySheet).forEach(name => {
+      const sh = getSheet(name, SCORE_HEADERS), rows = bySheet[name];
+      sh.getRange(sh.getLastRow() + 1, 1, rows.length, SCORE_HEADERS.length).setValues(rows);
+      scoreCount += rows.length;
+    });
+    SpreadsheetApp.flush();
+    PropertiesService.getScriptProperties().setProperty(doneKey, new Date().toISOString());
+  } finally {
+    lock.releaseLock();
+  }
+
+  const security = setupSecurity();
+  const msg = `🚚 匯入完成：代碼 ${imported.length} 組（${imported.join("、") || "無"}）、成績 ${scoreCount} 筆。` +
+    (conflicts.length ? `\n⚠️ 以下代碼在這個試算表已存在，未匯入（含其成績）：${conflicts.join("、")}` : "") +
+    (hashed.length ? `\n⚠️ 以下代碼的密碼已轉成雜湊，無法搬移：${hashed.join("、")}` : "") +
+    "\n" + security;
+  console.log(msg);
+  return msg;
+}
+
 // 📦 每日定時完整備份試算表至 Google Drive（可在觸發條件設定每日凌晨 3 點執行）
 function autoBackupDatabase() {
   const ss = SpreadsheetApp.getActiveSpreadsheet();
