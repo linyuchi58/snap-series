@@ -7,7 +7,7 @@
 
 - `games/*.html`：四款遊戲，各自是**單一 HTML 檔**（零建置工具，老師下載一個檔案就能用）。
   秒答樂 `popquiz-snap`、逆轉王 `popquiz-showdown`、攀岩王 `yushan-snap`、甜點派對 `sweet-monster-snap`。
-- `gas/Code.gs`：Google Apps Script 後端，各遊戲共用同一份程式。部署在 2 個試算表：秒答樂自己一個；逆轉王、攀岩王、甜點派對共用一個（同一個代碼三款通用，成績以 rankTitle 第 7 段區分遊戲）。
+- `gas/Code.gs`：Google Apps Script 後端，各遊戲共用同一份程式。四款舉牌遊戲共用同一個部署（網址開頭 AKfycbwldbgt8JrF），同一個代碼四款通用，成績以 rankTitle 第 7 段（GAME_LABEL）區分遊戲。拖曳分類、泡泡拍打等其他遊戲有各自獨立的後端，不屬於本系列。
 - `tests/`：`node tests/code-gs.test.js`（後端，模擬 GAS）、`node tests/e2e-admin.test.js games/*.html` 、`node tests/e2e-phase2.test.js games/*.html`（瀏覽器端對端，含雙機同步）、`node tests/e2e-shared.test.js`（共用後端）。
   每次修改後兩個都要通過。
 - `tools/`：一次性修補腳本。

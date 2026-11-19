@@ -6,12 +6,12 @@
 
 | 遊戲 | 檔案 | 版本 |
 | --- | --- | --- |
-| 舉牌秒答樂 PopQuiz Snap! | `games/popquiz-snap.html` | v2.8.9 |
+| 舉牌秒答樂 PopQuiz Snap! | `games/popquiz-snap.html` | v2.9.0 |
 | 舉牌逆轉王 PopQuiz Showdown! | `games/popquiz-showdown.html` | v1.2.3 |
 | 巔峰攀岩王 Yushan Snap! | `games/yushan-snap.html` | v1.3.3 |
 | 舉牌甜點大派對 Sweet Monster Snap! | `games/sweet-monster-snap.html` | v1.1.3 |
 
-- 後端：`gas/Code.gs`（部署方式見 `docs/DEPLOY-v3.1.md`）
+- 後端：`gas/Code.gs`，四款共用同一個部署（部署方式見 `docs/DEPLOY-v3.1.md`）
 - 維護守則：`CLAUDE.md`
 - 更新紀錄：`CHANGELOG.md`
 

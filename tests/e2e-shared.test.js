@@ -5,6 +5,7 @@ const { chromium } = require('playwright');
 const { createEnv, run, post, get } = require('./gas-mock');
 
 const GAMES = [
+  ['games/popquiz-snap.html', '秒答樂'],
   ['games/popquiz-showdown.html', '逆轉王'],
   ['games/yushan-snap.html', '攀岩王'],
   ['games/sweet-monster-snap.html', '甜點派對'],
@@ -44,7 +45,7 @@ const GAMES = [
   const check = (name, ok, detail = '') => results.push({ name, ok: !!ok, detail });
 
   // 1. 在攀岩王建立代碼 33333
-  const yushan = await open(GAMES[1][0]);
+  const yushan = await open(GAMES.find(g => g[1] === '攀岩王')[0]);
   const created = await yushan.evaluate(async () => {
     document.getElementById('teacher-pin-modal-input').value = 'TeacherA';
     await verifyTeacherStep1();
@@ -77,7 +78,7 @@ const GAMES = [
   }
 
   // 3. 從甜點派對的後台看全部成績
-  const sweet = await open(GAMES[2][0]);
+  const sweet = await open(GAMES.find(g => g[1] === '甜點派對')[0]);
   const seen = await sweet.evaluate(async () => {
     document.getElementById('teacher-pin-modal-input').value = 'TeacherA';
     await verifyTeacherStep1();
@@ -87,10 +88,10 @@ const GAMES = [
     document.getElementById('admin-view-mode').value = 'all_logs'; renderTeacherTable();
     return { games: logs.map(l => l.gameName).sort(), quizNos: [...new Set(logs.map(l => l.quizNo))].sort(), html: document.getElementById('admin-records-tbody').innerHTML };
   });
-  check('後台看得到三款遊戲的成績', seen.games.filter(g => g).length === 6, JSON.stringify(seen.games));
-  check('每筆成績標明來自哪一款遊戲', ['逆轉王', '攀岩王', '甜點派對'].every(g => seen.games.includes(g) && seen.html.includes(g)));
-  check('三款共用場次編號（測驗一、二、三）', seen.quizNos.length === 3, JSON.stringify(seen.quizNos));
-  check('三款都連到同一個後端網址', backendHosts.size === 1, [...backendHosts].join(' , '));
+  check('後台看得到四款遊戲的成績', seen.games.filter(g => g).length === 8, JSON.stringify(seen.games));
+  check('每筆成績標明來自哪一款遊戲', ['秒答樂', '逆轉王', '攀岩王', '甜點派對'].every(g => seen.games.includes(g) && seen.html.includes(g)));
+  check('四款共用場次編號（測驗一～四）', seen.quizNos.length === 4, JSON.stringify(seen.quizNos));
+  check('四款都連到同一個後端網址', backendHosts.size === 1, [...backendHosts].join(' , '));
   await browser.close();
 
   let fail = 0;
